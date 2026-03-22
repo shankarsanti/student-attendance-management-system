@@ -41,7 +41,29 @@ The School Management System is a web-based application built using the MERN (Mo
 - Backend: Node.js, Express.js
 - Database: MongoDB
 
+## Documentation
+
+- [Quick Start Guide](docs/QUICK_START.md) - Get started in minutes
+- [Project Structure](docs/PROJECT_STRUCTURE.md) - Complete directory structure and organization
+- [Scripts Guide](docs/SCRIPTS_GUIDE.md) - All utility scripts and their usage
+- [Seed Data Instructions](docs/SEED_DATA_INSTRUCTIONS.md) - Database seeding guide
+- [Contributing Guidelines](docs/CONTRIBUTING.md) - How to contribute to the project
+
 <br>
+
+# Project Structure
+
+The project follows a clean, organized structure:
+
+```
+MERN-School-Management-System/
+├── backend/          # Node.js/Express backend
+├── frontend/         # React frontend
+├── scripts/          # Utility scripts
+└── docs/            # Documentation
+```
+
+For detailed structure information, see [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 
 # Installation
 
@@ -108,7 +130,28 @@ If a .env file already exists and the line is commented out, remove the comment.
 npm start
 ```
 
-Frontend runs at localhost:3000. Backend runs at localhost:5000.
+Frontend runs at localhost:3000. Backend runs at localhost:5001.
+
+## Quick Start with Scripts
+
+For convenience, you can use the provided utility scripts:
+
+```bash
+# Start everything (MongoDB, backend, frontend)
+bash scripts/start-all.sh
+
+# Restart with clean state
+bash scripts/restart-app.sh
+
+# Diagnose login issues
+bash scripts/diagnose-login.sh
+
+# Seed database with sample data
+cd backend
+node scripts/seed-data.js
+```
+
+For detailed seeding instructions, see [docs/SEED_DATA_INSTRUCTIONS.md](docs/SEED_DATA_INSTRUCTIONS.md)
 
 # MONGO_URL instructions
 

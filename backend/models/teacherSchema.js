@@ -27,6 +27,16 @@ const teacherSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'subject',
     },
+    teachSubjects: [{
+        subject: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'subject',
+        },
+        semester: {
+            type: String,
+            enum: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8'],
+        }
+    }],
     teachSclass: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'sclass',
@@ -43,7 +53,14 @@ const teacherSchema = new mongoose.Schema({
         absentCount: {
             type: String,
         }
-    }]
+    }],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+    lastLogin: Date,
+    isActive: {
+        type: Boolean,
+        default: true
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model("teacher", teacherSchema)

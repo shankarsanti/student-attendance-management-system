@@ -22,6 +22,13 @@ const adminSchema = new mongoose.Schema({
         type: String,
         unique: true,
         required: true
+    },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+    lastLogin: Date,
+    isActive: {
+        type: Boolean,
+        default: true
     }
 });
 

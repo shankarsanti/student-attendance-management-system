@@ -26,7 +26,7 @@ export const loginUser = (fields, role) => async (dispatch) => {
             dispatch(authFailed(result.data.message));
         }
     } catch (error) {
-        dispatch(authError(error));
+        dispatch(authError(error.response?.data?.message || error.message || 'Network Error'));
     }
 };
 
@@ -47,7 +47,7 @@ export const registerUser = (fields, role) => async (dispatch) => {
             dispatch(authFailed(result.data.message));
         }
     } catch (error) {
-        dispatch(authError(error));
+        dispatch(authError(error.response?.data?.message || error.message || 'Network Error'));
     }
 };
 
@@ -64,7 +64,7 @@ export const getUserDetails = (id, address) => async (dispatch) => {
             dispatch(doneSuccess(result.data));
         }
     } catch (error) {
-        dispatch(getError(error));
+        dispatch(getError(error.response?.data?.message || error.message || 'Network Error'));
     }
 }
 
@@ -86,7 +86,17 @@ export const getUserDetails = (id, address) => async (dispatch) => {
 
 export const deleteUser = (id, address) => async (dispatch) => {
     dispatch(getRequest());
-    dispatch(getFailed("Sorry the delete function has been disabled for now."));
+
+    try {
+        const result = await axios.delete(`${process.env.REACT_APP_BASE_URL}/${address}/${id}`);
+        if (result.data.message) {
+            dispatch(getFailed(result.data.message));
+        } else {
+            dispatch(getDeleteSuccess());
+        }
+    } catch (error) {
+        dispatch(getError(error.response?.data?.message || error.message || 'Network Error'));
+    }
 }
 
 export const updateUser = (fields, id, address) => async (dispatch) => {
@@ -96,14 +106,15 @@ export const updateUser = (fields, id, address) => async (dispatch) => {
         const result = await axios.put(`${process.env.REACT_APP_BASE_URL}/${address}/${id}`, fields, {
             headers: { 'Content-Type': 'application/json' },
         });
-        if (result.data.schoolName) {
+        if (result.data.message) {
+            dispatch(getFailed(result.data.message));
+        } else if (result.data.schoolName) {
             dispatch(authSuccess(result.data));
-        }
-        else {
+        } else {
             dispatch(doneSuccess(result.data));
         }
     } catch (error) {
-        dispatch(getError(error));
+        dispatch(getError(error.response?.data?.message || error.message || 'Network Error'));
     }
 }
 
@@ -121,6 +132,6 @@ export const addStuff = (fields, address) => async (dispatch) => {
             dispatch(stuffAdded(result.data));
         }
     } catch (error) {
-        dispatch(authError(error));
+        dispatch(authError(error.response?.data?.message || error.message || 'Network Error'));
     }
 };

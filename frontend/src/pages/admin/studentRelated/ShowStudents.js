@@ -7,6 +7,7 @@ import {
     Paper, Box, IconButton
 } from '@mui/material';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import EditIcon from '@mui/icons-material/Edit';
 import { BlackButton, BlueButton, GreenButton } from '../../../components/buttonStyles';
 import TableTemplate from '../../../components/TableTemplate';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
@@ -45,13 +46,11 @@ const ShowStudents = () => {
     const deleteHandler = (deleteID, address) => {
         console.log(deleteID);
         console.log(address);
-        setMessage("Sorry the delete function has been disabled for now.")
-        setShowPopup(true)
 
-        // dispatch(deleteUser(deleteID, address))
-        //     .then(() => {
-        //         dispatch(getAllStudents(currentUser._id));
-        //     })
+        dispatch(deleteUser(deleteID, address))
+            .then(() => {
+                dispatch(getAllStudents(currentUser._id));
+            })
     }
 
     const studentColumns = [
@@ -113,10 +112,20 @@ const ShowStudents = () => {
                 <IconButton onClick={() => deleteHandler(row.id, "Student")}>
                     <PersonRemoveIcon color="error" />
                 </IconButton>
-                <BlueButton variant="contained"
-                    onClick={() => navigate("/Admin/students/student/" + row.id)}>
+                <BlueButton
+                    variant="contained"
+                    onClick={() => navigate("/Admin/students/student/" + row.id)}
+                    sx={{ marginRight: 1 }}
+                >
                     View
                 </BlueButton>
+                <GreenButton
+                    variant="contained"
+                    onClick={() => navigate("/Admin/students/edit/" + row.id)}
+                    sx={{ marginRight: 1 }}
+                >
+                    <EditIcon />
+                </GreenButton>
                 <React.Fragment>
                     <ButtonGroup variant="contained" ref={anchorRef} aria-label="split button">
                         <Button onClick={handleClick}>{options[selectedIndex]}</Button>

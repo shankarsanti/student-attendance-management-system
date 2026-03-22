@@ -1,4 +1,5 @@
 import { Container, Grid, Paper } from '@mui/material'
+import { useNavigate } from 'react-router-dom';
 import SeeNotice from '../../components/SeeNotice';
 import CountUp from 'react-countup';
 import styled from 'styled-components';
@@ -11,6 +12,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
 
 const TeacherHomePage = () => {
+    const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const { currentUser } = useSelector((state) => state.user);
@@ -32,7 +34,7 @@ const TeacherHomePage = () => {
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={3} lg={3}>
-                        <StyledPaper>
+                        <StyledPaper onClick={() => navigate("/Teacher/class")}>
                             <img src={Students} alt="Students" />
                             <Title>
                                 Class Students
@@ -41,7 +43,7 @@ const TeacherHomePage = () => {
                         </StyledPaper>
                     </Grid>
                     <Grid item xs={12} md={3} lg={3}>
-                        <StyledPaper>
+                        <StyledPaper onClick={() => navigate("/Teacher/class")}>
                             <img src={Lessons} alt="Lessons" />
                             <Title>
                                 Total Lessons
@@ -50,7 +52,7 @@ const TeacherHomePage = () => {
                         </StyledPaper>
                     </Grid>
                     <Grid item xs={12} md={3} lg={3}>
-                        <StyledPaper>
+                        <StyledPaper onClick={() => navigate("/Teacher/class")}>
                             <img src={Tests} alt="Tests" />
                             <Title>
                                 Tests Taken
@@ -59,7 +61,7 @@ const TeacherHomePage = () => {
                         </StyledPaper>
                     </Grid>
                     <Grid item xs={12} md={3} lg={3}>
-                        <StyledPaper>
+                        <StyledPaper onClick={() => navigate("/Teacher/class")}>
                             <img src={Time} alt="Time" />
                             <Title>
                                 Total Hours
@@ -85,6 +87,13 @@ const StyledPaper = styled(Paper)`
   justify-content: space-between;
   align-items: center;
   text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+    transform: translateY(-4px);
+  }
 `;
 
 const Title = styled.p`

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Button, Grid, Box, Typography, Paper, Checkbox, FormControlLabel, TextField, CssBaseline, IconButton, InputAdornment, CircularProgress, Backdrop } from '@mui/material';
+import { Button, Grid, Box, Typography, Paper, Checkbox, FormControlLabel, TextField, CssBaseline, IconButton, InputAdornment, CircularProgress } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import bgpic from "../assets/designlogin.jpg"
@@ -20,7 +20,6 @@ const LoginPage = ({ role }) => {
     const { status, currentUser, response, error, currentRole } = useSelector(state => state.user);;
 
     const [toggle, setToggle] = useState(false)
-    const [guestLoader, setGuestLoader] = useState(false)
     const [loader, setLoader] = useState(false)
     const [showPopup, setShowPopup] = useState(false);
     const [message, setMessage] = useState("");
@@ -73,30 +72,6 @@ const LoginPage = ({ role }) => {
         if (name === 'studentName') setStudentNameError(false);
     };
 
-    const guestModeHandler = () => {
-        const password = "zxc"
-
-        if (role === "Admin") {
-            const email = "yogendra@12"
-            const fields = { email, password }
-            setGuestLoader(true)
-            dispatch(loginUser(fields, role))
-        }
-        else if (role === "Student") {
-            const rollNum = "1"
-            const studentName = "Dipesh Awasthi"
-            const fields = { rollNum, studentName, password }
-            setGuestLoader(true)
-            dispatch(loginUser(fields, role))
-        }
-        else if (role === "Teacher") {
-            const email = "tony@12"
-            const fields = { email, password }
-            setGuestLoader(true)
-            dispatch(loginUser(fields, role))
-        }
-    }
-
     useEffect(() => {
         if (status === 'success' || currentUser !== null) {
             if (currentRole === 'Admin') {
@@ -117,7 +92,6 @@ const LoginPage = ({ role }) => {
             setMessage("Network Error")
             setShowPopup(true)
             setLoader(false)
-            setGuestLoader(false)
         }
     }, [status, currentRole, navigate, error, response, currentUser]);
 
@@ -226,20 +200,12 @@ const LoginPage = ({ role }) => {
                                 type="submit"
                                 fullWidth
                                 variant="contained"
-                                sx={{ mt: 3 }}
+                                sx={{ mt: 3, mb: 3 }}
                             >
                                 {loader ?
                                     <CircularProgress size={24} color="inherit" />
                                     : "Login"}
                             </LightPurpleButton>
-                            <Button
-                                fullWidth
-                                onClick={guestModeHandler}
-                                variant="outlined"
-                                sx={{ mt: 2, mb: 3, color: "#7f56da", borderColor: "#7f56da" }}
-                            >
-                                Login as Guest
-                            </Button>
                             {role === "Admin" &&
                                 <Grid container>
                                     <Grid>
@@ -270,13 +236,6 @@ const LoginPage = ({ role }) => {
                     }}
                 />
             </Grid>
-            <Backdrop
-                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-                open={guestLoader}
-            >
-                <CircularProgress color="primary" />
-                Please Wait
-            </Backdrop>
             <Popup message={message} setShowPopup={setShowPopup} showPopup={showPopup} />
         </ThemeProvider>
     );

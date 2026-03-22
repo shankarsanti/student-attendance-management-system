@@ -13,6 +13,7 @@ import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../redux/userRelated/userHandle';
 import Popup from '../components/Popup';
+import bgImage from '../assets/classroom.png';
 
 const ChooseUser = ({ visitor }) => {
   const dispatch = useDispatch()
@@ -142,11 +143,31 @@ const ChooseUser = ({ visitor }) => {
 export default ChooseUser;
 
 const StyledContainer = styled.div`
-  background: linear-gradient(to bottom, #411d70, #19118b);
+  background-image: url(${bgImage});
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   height: 120vh;
   display: flex;
   justify-content: center;
   padding: 2rem;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 0;
+  }
+  
+  & > * {
+    position: relative;
+    z-index: 1;
+  }
 `;
 
 const StyledPaper = styled(Paper)`

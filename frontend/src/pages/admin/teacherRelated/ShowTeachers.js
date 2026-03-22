@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { deleteUser } from '../../../redux/userRelated/userHandle';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import EditIcon from '@mui/icons-material/Edit';
 import { StyledTableCell, StyledTableRow } from '../../../components/styles';
 import { BlueButton, GreenButton } from '../../../components/buttonStyles';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
@@ -47,24 +48,28 @@ const ShowTeachers = () => {
     const deleteHandler = (deleteID, address) => {
         console.log(deleteID);
         console.log(address);
-        setMessage("Sorry the delete function has been disabled for now.")
-        setShowPopup(true)
 
-        // dispatch(deleteUser(deleteID, address)).then(() => {
-        //     dispatch(getAllTeachers(currentUser._id));
-        // });
+        dispatch(deleteUser(deleteID, address)).then(() => {
+            dispatch(getAllTeachers(currentUser._id));
+        });
     };
 
     const columns = [
         { id: 'name', label: 'Name', minWidth: 170 },
-        { id: 'teachSubject', label: 'Subject', minWidth: 100 },
+        { id: 'teachSubject', label: 'Primary Subject', minWidth: 100 },
+        { id: 'additionalSubjects', label: 'Additional Subjects', minWidth: 150 },
         { id: 'teachSclass', label: 'Class', minWidth: 170 },
     ];
 
     const rows = teachersList.map((teacher) => {
+        const additionalSubjects = teacher.teachSubjects && teacher.teachSubjects.length > 0
+            ? teacher.teachSubjects.map(s => s.subName).join(', ')
+            : 'None';
+        
         return {
             name: teacher.name,
             teachSubject: teacher.teachSubject?.subName || null,
+            additionalSubjects: additionalSubjects,
             teachSclass: teacher.teachSclass.sclassName,
             teachSclassID: teacher.teachSclass._id,
             id: teacher._id,
@@ -137,9 +142,14 @@ const ShowTeachers = () => {
                                                 <PersonRemoveIcon color="error" />
                                             </IconButton>
                                             <BlueButton variant="contained"
-                                                onClick={() => navigate("/Admin/teachers/teacher/" + row.id)}>
+                                                onClick={() => navigate("/Admin/teachers/teacher/" + row.id)}
+                                                sx={{ marginRight: 1 }}>
                                                 View
                                             </BlueButton>
+                                            <GreenButton variant="contained"
+                                                onClick={() => navigate("/Admin/teachers/edit/" + row.id)}>
+                                                <EditIcon />
+                                            </GreenButton>
                                         </StyledTableCell>
                                     </StyledTableRow>
                                 );

@@ -18,7 +18,7 @@ export const getAllStudents = (id) => async (dispatch) => {
             dispatch(getSuccess(result.data));
         }
     } catch (error) {
-        dispatch(getError(error));
+        dispatch(getError(error.response?.data?.message || error.message || 'Network Error'));
     }
 }
 
@@ -35,7 +35,7 @@ export const updateStudentFields = (id, fields, address) => async (dispatch) => 
             dispatch(stuffDone());
         }
     } catch (error) {
-        dispatch(getError(error));
+        dispatch(getError(error.response?.data?.message || error.message || 'Network Error'));
     }
 }
 
@@ -50,6 +50,22 @@ export const removeStuff = (id, address) => async (dispatch) => {
             dispatch(stuffDone());
         }
     } catch (error) {
-        dispatch(getError(error));
+        dispatch(getError(error.response?.data?.message || error.message || 'Network Error'));
+    }
+}
+
+
+export const getStudentDetails = (id) => async (dispatch) => {
+    dispatch(getRequest());
+
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BASE_URL}/Student/${id}`);
+        if (result.data.message) {
+            dispatch(getFailed(result.data.message));
+        } else {
+            dispatch(getSuccess(result.data));
+        }
+    } catch (error) {
+        dispatch(getError(error.response?.data?.message || error.message || 'Network Error'));
     }
 }

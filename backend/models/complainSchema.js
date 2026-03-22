@@ -18,6 +18,11 @@ const complainSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'admin',
         required: true,
+    },
+    status: {
+        type: String,
+        enum: ['Pending', 'Resolved', 'In Progress'],
+        default: 'Pending'
     }
 });
 

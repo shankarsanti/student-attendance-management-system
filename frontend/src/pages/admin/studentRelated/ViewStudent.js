@@ -412,6 +412,7 @@ const ViewStudent = () => {
                                     <Tab label="Details" value="1" />
                                     <Tab label="Attendance" value="2" />
                                     <Tab label="Marks" value="3" />
+                                    <Tab label="Fee Details" value="4" />
                                 </TabList>
                             </Box>
                             <Container sx={{ marginTop: "3rem", marginBottom: "4rem" }}>
@@ -423,6 +424,11 @@ const ViewStudent = () => {
                                 </TabPanel>
                                 <TabPanel value="3">
                                     <StudentMarksSection />
+                                </TabPanel>
+                                <TabPanel value="4">
+                                    <Button variant="contained" sx={styles.styledButton} onClick={() => navigate(`/Admin/fees/student/${studentID}`)}>
+                                        View Complete Fee Details
+                                    </Button>
                                 </TabPanel>
                             </Container>
                         </TabContext>

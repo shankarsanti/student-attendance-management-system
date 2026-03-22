@@ -26,6 +26,19 @@ const noticeList = async (req, res) => {
     }
 };
 
+const getNoticeDetail = async (req, res) => {
+    try {
+        let notice = await Notice.findById(req.params.id);
+        if (notice) {
+            res.send(notice);
+        } else {
+            res.send({ message: "No notice found" });
+        }
+    } catch (err) {
+        res.status(500).json(err);
+    }
+};
+
 const updateNotice = async (req, res) => {
     try {
         const result = await Notice.findByIdAndUpdate(req.params.id,
@@ -59,4 +72,4 @@ const deleteNotices = async (req, res) => {
     }
 }
 
-module.exports = { noticeCreate, noticeList, updateNotice, deleteNotice, deleteNotices };
+module.exports = { noticeCreate, noticeList, getNoticeDetail, updateNotice, deleteNotice, deleteNotices };

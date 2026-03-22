@@ -23,4 +23,45 @@ const complainList = async (req, res) => {
     }
 };
 
-module.exports = { complainCreate, complainList };
+const updateComplainStatus = async (req, res) => {
+    try {
+        const result = await Complain.findByIdAndUpdate(
+            req.params.id,
+            { status: req.body.status },
+            { new: true }
+        ).populate("user", "name");
+        res.send(result);
+    } catch (error) {
+        res.status(500).json(error);
+    }
+};
+
+const deleteComplain = async (req, res) => {
+    try {
+        const result = await Complain.findByIdAndDelete(req.params.id);
+        res.send(result);
+    } catch (error) {
+        res.status(500).json(error);
+    }
+};
+
+const deleteComplains = async (req, res) => {
+    try {
+        const result = await Complain.deleteMany({ school: req.params.id });
+        if (result.deletedCount === 0) {
+            res.send({ message: "No complains found to delete" });
+        } else {
+            res.send(result);
+        }
+    } catch (error) {
+        res.status(500).json(error);
+    }
+};
+
+module.exports = { 
+    complainCreate, 
+    complainList, 
+    updateComplainStatus,
+    deleteComplain,
+    deleteComplains
+};

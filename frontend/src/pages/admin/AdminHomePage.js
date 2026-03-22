@@ -1,4 +1,5 @@
 import { Container, Grid, Paper } from '@mui/material'
+import { useNavigate } from 'react-router-dom';
 import SeeNotice from '../../components/SeeNotice';
 import Students from "../../assets/img1.png";
 import Classes from "../../assets/img2.png";
@@ -11,12 +12,15 @@ import { useEffect } from 'react';
 import { getAllSclasses } from '../../redux/sclassRelated/sclassHandle';
 import { getAllStudents } from '../../redux/studentRelated/studentHandle';
 import { getAllTeachers } from '../../redux/teacherRelated/teacherHandle';
+import { getAllPayments } from '../../redux/feeRelated/feeHandle';
 
 const AdminHomePage = () => {
+    const navigate = useNavigate();
     const dispatch = useDispatch();
     const { studentsList } = useSelector((state) => state.student);
     const { sclassesList } = useSelector((state) => state.sclass);
     const { teachersList } = useSelector((state) => state.teacher);
+    const { paymentsList } = useSelector((state) => state.fee);
 
     const { currentUser } = useSelector(state => state.user)
 
@@ -26,18 +30,23 @@ const AdminHomePage = () => {
         dispatch(getAllStudents(adminID));
         dispatch(getAllSclasses(adminID, "Sclass"));
         dispatch(getAllTeachers(adminID));
+        dispatch(getAllPayments(adminID));
     }, [adminID, dispatch]);
 
     const numberOfStudents = studentsList && studentsList.length;
     const numberOfClasses = sclassesList && sclassesList.length;
     const numberOfTeachers = teachersList && teachersList.length;
+    
+    const totalFeesCollected = paymentsList && Array.isArray(paymentsList) 
+        ? paymentsList.reduce((sum, payment) => sum + payment.amountPaid, 0) 
+        : 0;
 
     return (
         <>
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={3} lg={3}>
-                        <StyledPaper>
+                        <StyledPaper onClick={() => navigate("/Admin/students")}>
                             <img src={Students} alt="Students" />
                             <Title>
                                 Total Students
@@ -46,7 +55,7 @@ const AdminHomePage = () => {
                         </StyledPaper>
                     </Grid>
                     <Grid item xs={12} md={3} lg={3}>
-                        <StyledPaper>
+                        <StyledPaper onClick={() => navigate("/Admin/classes")}>
                             <img src={Classes} alt="Classes" />
                             <Title>
                                 Total Classes
@@ -55,7 +64,7 @@ const AdminHomePage = () => {
                         </StyledPaper>
                     </Grid>
                     <Grid item xs={12} md={3} lg={3}>
-                        <StyledPaper>
+                        <StyledPaper onClick={() => navigate("/Admin/teachers")}>
                             <img src={Teachers} alt="Teachers" />
                             <Title>
                                 Total Teachers
@@ -64,12 +73,13 @@ const AdminHomePage = () => {
                         </StyledPaper>
                     </Grid>
                     <Grid item xs={12} md={3} lg={3}>
-                        <StyledPaper>
+                        <StyledPaper onClick={() => navigate("/Admin/fees")}>
                             <img src={Fees} alt="Fees" />
                             <Title>
                                 Fees Collection
                             </Title>
-                            <Data start={0} end={23000} duration={2.5} prefix="$" />                        </StyledPaper>
+                            <Data start={0} end={totalFeesCollected} duration={2.5} prefix="₹" />
+                        </StyledPaper>
                     </Grid>
                     <Grid item xs={12} md={12} lg={12}>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
@@ -91,6 +101,13 @@ const StyledPaper = styled(Paper)`
   justify-content: space-between;
   align-items: center;
   text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+    transform: translateY(-4px);
+  }
 `;
 
 const Title = styled.p`

@@ -39,12 +39,11 @@ const ShowClasses = () => {
   const deleteHandler = (deleteID, address) => {
     console.log(deleteID);
     console.log(address);
-    setMessage("Sorry the delete function has been disabled for now.")
-    setShowPopup(true)
-    // dispatch(deleteUser(deleteID, address))
-    //   .then(() => {
-    //     dispatch(getAllSclasses(adminID, "Sclass"));
-    //   })
+    
+    dispatch(deleteUser(deleteID, address))
+      .then(() => {
+        dispatch(getAllSclasses(adminID, "Sclass"));
+      })
   }
 
   const sclassColumns = [
@@ -118,8 +117,8 @@ const ShowClasses = () => {
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          {actions.map((action) => (
-            <MenuItem onClick={action.action}>
+          {actions.map((action, index) => (
+            <MenuItem key={index} onClick={action.action}>
               <ListItemIcon fontSize="small">
                 {action.icon}
               </ListItemIcon>

@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from '@mui/icons-material/Edit';
 import { getAllNotices } from '../../../redux/noticeRelated/noticeHandle';
 import { deleteUser } from '../../../redux/userRelated/userHandle';
 import TableTemplate from '../../../components/TableTemplate';
@@ -57,6 +58,12 @@ const ShowNotices = () => {
                 <IconButton onClick={() => deleteHandler(row.id, "Notice")}>
                     <DeleteIcon color="error" />
                 </IconButton>
+                <GreenButton
+                    variant="contained"
+                    onClick={() => navigate("/Admin/notices/edit/" + row.id)}
+                >
+                    <EditIcon />
+                </GreenButton>
             </>
         );
     };

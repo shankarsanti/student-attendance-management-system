@@ -23,9 +23,11 @@ import ShowStudents from './studentRelated/ShowStudents';
 import StudentAttendance from './studentRelated/StudentAttendance';
 import StudentExamMarks from './studentRelated/StudentExamMarks';
 import ViewStudent from './studentRelated/ViewStudent';
+import EditStudent from './studentRelated/EditStudent';
 
 import AddNotice from './noticeRelated/AddNotice';
 import ShowNotices from './noticeRelated/ShowNotices';
+import EditNotice from './noticeRelated/EditNotice';
 
 import ShowSubjects from './subjectRelated/ShowSubjects';
 import SubjectForm from './subjectRelated/SubjectForm';
@@ -36,11 +38,17 @@ import ChooseClass from './teacherRelated/ChooseClass';
 import ChooseSubject from './teacherRelated/ChooseSubject';
 import ShowTeachers from './teacherRelated/ShowTeachers';
 import TeacherDetails from './teacherRelated/TeacherDetails';
+import EditTeacher from './teacherRelated/EditTeacher';
 
 import AddClass from './classRelated/AddClass';
 import ClassDetails from './classRelated/ClassDetails';
 import ShowClasses from './classRelated/ShowClasses';
 import AccountMenu from '../../components/AccountMenu';
+
+import ShowFees from './feeRelated/ShowFees';
+import AddFeeStructure from './feeRelated/AddFeeStructure';
+import RecordPayment from './feeRelated/RecordPayment';
+import StudentFeeDetails from './feeRelated/StudentFeeDetails';
 
 const AdminDashboard = () => {
     const [open, setOpen] = useState(false);
@@ -101,6 +109,7 @@ const AdminDashboard = () => {
                         {/* Notice */}
                         <Route path="/Admin/addnotice" element={<AddNotice />} />
                         <Route path="/Admin/notices" element={<ShowNotices />} />
+                        <Route path="/Admin/notices/edit/:id" element={<EditNotice />} />
 
                         {/* Subject */}
                         <Route path="/Admin/subjects" element={<ShowSubjects />} />
@@ -123,16 +132,24 @@ const AdminDashboard = () => {
                         <Route path="/Admin/addstudents" element={<AddStudent situation="Student" />} />
                         <Route path="/Admin/students" element={<ShowStudents />} />
                         <Route path="/Admin/students/student/:id" element={<ViewStudent />} />
+                        <Route path="/Admin/students/edit/:id" element={<EditStudent />} />
                         <Route path="/Admin/students/student/attendance/:id" element={<StudentAttendance situation="Student" />} />
                         <Route path="/Admin/students/student/marks/:id" element={<StudentExamMarks situation="Student" />} />
 
                         {/* Teacher */}
                         <Route path="/Admin/teachers" element={<ShowTeachers />} />
                         <Route path="/Admin/teachers/teacher/:id" element={<TeacherDetails />} />
+                        <Route path="/Admin/teachers/edit/:id" element={<EditTeacher />} />
                         <Route path="/Admin/teachers/chooseclass" element={<ChooseClass situation="Teacher" />} />
                         <Route path="/Admin/teachers/choosesubject/:id" element={<ChooseSubject situation="Norm" />} />
                         <Route path="/Admin/teachers/choosesubject/:classID/:teacherID" element={<ChooseSubject situation="Teacher" />} />
                         <Route path="/Admin/teachers/addteacher/:id" element={<AddTeacher />} />
+
+                        {/* Fee Management */}
+                        <Route path="/Admin/fees" element={<ShowFees />} />
+                        <Route path="/Admin/fees/addstructure" element={<AddFeeStructure />} />
+                        <Route path="/Admin/fees/recordpayment" element={<RecordPayment />} />
+                        <Route path="/Admin/fees/student/:id" element={<StudentFeeDetails />} />
 
                         <Route path="/logout" element={<Logout />} />
                     </Routes>
