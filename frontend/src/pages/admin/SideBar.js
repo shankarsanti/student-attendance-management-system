@@ -12,6 +12,7 @@ import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccount
 import ReportIcon from '@mui/icons-material/Report';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import PaymentIcon from '@mui/icons-material/Payment';
+import LockResetIcon from '@mui/icons-material/LockReset';
 
 const SideBar = () => {
     const location = useLocation();
@@ -77,6 +78,12 @@ const SideBar = () => {
                         <AccountCircleOutlinedIcon color={location.pathname.startsWith("/Admin/profile") ? 'primary' : 'inherit'} />
                     </ListItemIcon>
                     <ListItemText primary="Profile" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Admin/resetpassword">
+                    <ListItemIcon>
+                        <LockResetIcon color={location.pathname.startsWith("/Admin/resetpassword") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Reset Password" />
                 </ListItemButton>
                 <ListItemButton component={Link} to="/logout">
                     <ListItemIcon>

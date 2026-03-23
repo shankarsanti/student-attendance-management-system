@@ -8,6 +8,7 @@ import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import LoginPage from './pages/LoginPage';
 import AdminRegisterPage from './pages/admin/AdminRegisterPage';
 import ChooseUser from './pages/ChooseUser';
+import ForgotPassword from './pages/ForgotPassword';
 
 const App = () => {
   const { currentRole } = useSelector(state => state.user);
@@ -22,6 +23,8 @@ const App = () => {
           <Route path="/Adminlogin" element={<LoginPage role="Admin" />} />
           <Route path="/Studentlogin" element={<LoginPage role="Student" />} />
           <Route path="/Teacherlogin" element={<LoginPage role="Teacher" />} />
+
+          <Route path="/forgotpassword/:role" element={<ForgotPassword />} />
 
           <Route path="/Adminregister" element={<AdminRegisterPage />} />
 

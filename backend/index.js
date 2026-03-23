@@ -9,6 +9,7 @@ dotenv.config();
 const app = express()
 const Routes = require("./routes/route.js")
 const AuthRoutes = require("./routes/authRoutes.js")
+const PasswordRoutes = require("./routes/passwordRoutes.js")
 
 const PORT = process.env.PORT || 5000
 
@@ -28,6 +29,7 @@ mongoose
 
 app.use('/', Routes);
 app.use('/auth', AuthRoutes);
+app.use('/', PasswordRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server started at port no. ${PORT}`)
