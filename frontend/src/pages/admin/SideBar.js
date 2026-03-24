@@ -13,6 +13,7 @@ import ReportIcon from '@mui/icons-material/Report';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import PaymentIcon from '@mui/icons-material/Payment';
 import LockResetIcon from '@mui/icons-material/LockReset';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const SideBar = () => {
     const location = useLocation();
@@ -66,6 +67,12 @@ const SideBar = () => {
                         <PaymentIcon color={location.pathname.startsWith("/Admin/fees") ? 'primary' : 'inherit'} />
                     </ListItemIcon>
                     <ListItemText primary="Fees Collection" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Admin/paymentsettings">
+                    <ListItemIcon>
+                        <SettingsIcon color={location.pathname.startsWith("/Admin/paymentsettings") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Payment Settings" />
                 </ListItemButton>
             </React.Fragment>
             <Divider sx={{ my: 1 }} />

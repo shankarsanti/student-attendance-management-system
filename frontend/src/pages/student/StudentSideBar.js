@@ -10,6 +10,7 @@ import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import PaymentIcon from '@mui/icons-material/Payment';
 
 const StudentSideBar = () => {
     const location = useLocation();
@@ -45,6 +46,12 @@ const StudentSideBar = () => {
                         <MenuBookIcon color={location.pathname.startsWith("/Student/lessons") ? 'primary' : 'inherit'} />
                     </ListItemIcon>
                     <ListItemText primary="Lessons Schedule" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Student/fees">
+                    <ListItemIcon>
+                        <PaymentIcon color={location.pathname.startsWith("/Student/fees") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Fee Payment" />
                 </ListItemButton>
                 <ListItemButton component={Link} to="/Student/complain">
                     <ListItemIcon>

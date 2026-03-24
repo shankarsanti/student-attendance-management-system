@@ -73,13 +73,18 @@ const AdminProfile = () => {
                                         label={currentUser.email} 
                                         variant="outlined" 
                                         size="small"
+                                        sx={{ color: 'white', borderColor: 'white' }}
                                     />
                                     <Chip 
                                         icon={<School />} 
                                         label={currentUser.schoolName} 
                                         variant="outlined" 
                                         size="small"
-                                        color="primary"
+                                        sx={{ 
+                                            color: '#FFD700',
+                                            borderColor: '#FFD700',
+                                            fontWeight: 600
+                                        }}
                                     />
                                 </Box>
                             </Box>

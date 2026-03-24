@@ -27,6 +27,7 @@ const { teacherRegister, teacherLogIn, getTeachers, getTeacherDetail, deleteTeac
 const { createFeeStructure, getFeeStructures, getFeeStructure, updateFeeStructure, deleteFeeStructure, recordPayment, getPaymentHistory, getStudentPayments, getStudentFeeStatus, deletePayment, getFeeDefaulters } = require('../controllers/fee-controller.js');
 const { createTest, getTestsByTeacher, getTestsByClass, getTestDetail, updateTest, deleteTest, updateTestResult, getTestsByStudent } = require('../controllers/test-controller.js');
 const { createLesson, getLessonsByTeacher, getLessonsByClass, getLessonsByDateRange, getLessonDetail, updateLesson, deleteLesson, markLessonAttendance, getTodayLessons, getUpcomingLessons } = require('../controllers/lesson-controller.js');
+const { getPaymentSettings, updatePaymentSettings } = require('../controllers/payment-settings-controller.js');
 
 // Admin
 router.post('/AdminReg', adminRegister);
@@ -166,5 +167,10 @@ router.delete('/Lesson/:id', deleteLesson);
 router.post('/LessonAttendance', markLessonAttendance);
 router.get('/TodayLessons/:id', getTodayLessons);
 router.get('/UpcomingLessons/:id', getUpcomingLessons);
+
+// Payment Settings
+
+router.get('/PaymentSettings/:schoolId', getPaymentSettings);
+router.put('/PaymentSettings/:schoolId', updatePaymentSettings);
 
 module.exports = router;

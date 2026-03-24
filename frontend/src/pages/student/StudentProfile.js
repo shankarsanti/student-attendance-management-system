@@ -69,13 +69,18 @@ const StudentProfile = () => {
                                         label={sclassName.sclassName} 
                                         variant="outlined" 
                                         size="small"
+                                        sx={{ color: 'white', borderColor: 'white' }}
                                     />
                                     <Chip 
                                         icon={<School />} 
                                         label={studentSchool.schoolName} 
                                         variant="outlined" 
                                         size="small"
-                                        color="primary"
+                                        sx={{ 
+                                            color: '#FFD700',
+                                            borderColor: '#FFD700',
+                                            fontWeight: 600
+                                        }}
                                     />
                                 </Box>
                             </Box>

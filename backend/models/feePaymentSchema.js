@@ -21,7 +21,7 @@ const feePaymentSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['Cash', 'Card', 'Online', 'Cheque', 'Bank Transfer'],
+        enum: ['Cash', 'Card', 'Online', 'Cheque', 'Bank Transfer', 'UPI', 'PhonePe', 'Paytm', 'QR Code'],
         default: 'Cash'
     },
     transactionId: {

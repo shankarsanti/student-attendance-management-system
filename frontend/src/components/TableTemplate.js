@@ -5,6 +5,13 @@ import { Table, TableBody, TableContainer, TableHead, TablePagination } from '@m
 const TableTemplate = ({ buttonHaver: ButtonHaver, columns, rows }) => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+    
+    // Safety check for ButtonHaver
+    if (!ButtonHaver) {
+        console.error('TableTemplate: buttonHaver prop is required but was undefined');
+        return <div>Error: Button component not provided</div>;
+    }
+    
     return (
         <>
             <TableContainer>

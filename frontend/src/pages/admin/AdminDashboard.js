@@ -50,6 +50,7 @@ import AddFeeStructure from './feeRelated/AddFeeStructure';
 import RecordPayment from './feeRelated/RecordPayment';
 import StudentFeeDetails from './feeRelated/StudentFeeDetails';
 import ResetPassword from './ResetPassword';
+import PaymentSettings from './PaymentSettings';
 
 const AdminDashboard = () => {
     const [open, setOpen] = useState(false);
@@ -151,6 +152,9 @@ const AdminDashboard = () => {
                         <Route path="/Admin/fees/addstructure" element={<AddFeeStructure />} />
                         <Route path="/Admin/fees/recordpayment" element={<RecordPayment />} />
                         <Route path="/Admin/fees/student/:id" element={<StudentFeeDetails />} />
+
+                        {/* Payment Settings */}
+                        <Route path="/Admin/paymentsettings" element={<PaymentSettings />} />
 
                         {/* Password Management */}
                         <Route path="/Admin/resetpassword" element={<ResetPassword />} />

@@ -90,6 +90,14 @@ const ShowFees = () => {
         };
     });
 
+    const PaymentButtonHaver = ({ row }) => {
+        return (
+            <IconButton onClick={() => navigate(`/Admin/fees/payment/${row.id}`)}>
+                <PostAddIcon color="primary" />
+            </IconButton>
+        );
+    };
+
     const FeeStructureButtonHaver = ({ row }) => {
         return (
             <>
@@ -168,7 +176,7 @@ const ShowFees = () => {
                         ) : (
                             <>
                                 {Array.isArray(paymentsList) && paymentsList.length > 0 &&
-                                    <TableTemplate columns={paymentColumns} rows={paymentRows} />
+                                    <TableTemplate buttonHaver={PaymentButtonHaver} columns={paymentColumns} rows={paymentRows} />
                                 }
                                 {(!paymentsList || paymentsList.length === 0) &&
                                     <Box sx={{ padding: 3, textAlign: 'center' }}>

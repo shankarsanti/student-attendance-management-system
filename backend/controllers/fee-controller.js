@@ -65,11 +65,36 @@ const deleteFeeStructure = async (req, res) => {
 // Fee Payment Controllers
 const recordPayment = async (req, res) => {
     try {
+        console.log('Recording payment with data:', req.body);
+        
+        // Validate required fields
+        if (!req.body.student) {
+            console.error('Missing student ID');
+            return res.status(400).json({ message: 'Student ID is required' });
+        }
+        if (!req.body.feeStructure) {
+            console.error('Missing fee structure ID');
+            return res.status(400).json({ message: 'Fee structure ID is required' });
+        }
+        if (!req.body.amountPaid || req.body.amountPaid <= 0) {
+            console.error('Invalid amount:', req.body.amountPaid);
+            return res.status(400).json({ message: 'Valid payment amount is required' });
+        }
+        
         const payment = new FeePayment(req.body);
+        console.log('Created payment object:', payment);
+        
         const result = await payment.save();
+        console.log('Payment saved successfully:', result._id);
+        
         res.send(result);
     } catch (err) {
-        res.status(500).json(err);
+        console.error('Error recording payment:', err);
+        console.error('Error details:', err.message);
+        res.status(500).json({ 
+            message: 'Error recording payment', 
+            error: err.message 
+        });
     }
 };
 
@@ -108,6 +133,10 @@ const getStudentFeeStatus = async (req, res) => {
     try {
         const student = await Student.findById(req.params.id).populate('sclassName');
         
+        if (!student) {
+            return res.status(404).json({ message: "Student not found" });
+        }
+
         // Get all fee structures for student's class
         const feeStructures = await FeeStructure.find({
             $or: [
@@ -115,7 +144,11 @@ const getStudentFeeStatus = async (req, res) => {
                 { class: null }
             ],
             school: student.school
-        });
+        }).populate('class', 'sclassName');
+
+        if (feeStructures.length === 0) {
+            return res.send({ message: "No fee structure found for this student" });
+        }
 
         // Get all payments made by student
         const payments = await FeePayment.find({ student: req.params.id });
@@ -137,6 +170,7 @@ const getStudentFeeStatus = async (req, res) => {
 
         res.send(feeStatus);
     } catch (err) {
+        console.error('Error in getStudentFeeStatus:', err);
         res.status(500).json(err);
     }
 };
