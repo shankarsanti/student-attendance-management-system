@@ -187,12 +187,12 @@ const LoginPage = ({ role }) => {
                                     ),
                                 }}
                             />
-                            <Grid container sx={{ display: "flex", justifyContent: "space-between" }}>
+                            <Grid container sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <FormControlLabel
                                     control={<Checkbox value="remember" color="primary" />}
                                     label="Remember me"
                                 />
-                                <StyledLink to={`/forgotpassword/${role}`}>
+                                <StyledLink to={`/forgotpassword/${role}`} style={{ marginTop: '9px' }}>
                                     Forgot password?
                                 </StyledLink>
                             </Grid>
@@ -247,4 +247,8 @@ const StyledLink = styled(Link)`
   margin-top: 9px;
   text-decoration: none;
   color: #7f56da;
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
 `;

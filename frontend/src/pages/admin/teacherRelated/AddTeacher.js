@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { getSubjectDetails } from '../../../redux/sclassRelated/sclassHandle';
 import Popup from '../../../components/Popup';
 import { registerUser } from '../../../redux/userRelated/userHandle';
@@ -11,8 +11,10 @@ const AddTeacher = () => {
   const params = useParams()
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const subjectID = params.id
+  const classIDFromState = location.state?.classID
 
   const { status, response, error } = useSelector(state => state.user);
   const { subjectDetails } = useSelector((state) => state.sclass);
@@ -32,12 +34,24 @@ const AddTeacher = () => {
   const role = "Teacher"
   const school = subjectDetails && subjectDetails.school
   const teachSubject = subjectDetails && subjectDetails._id
-  const teachSclass = subjectDetails && subjectDetails.sclassName && subjectDetails.sclassName._id
+  // Fix: Use fallback logic to extract teachSclass
+  // Primary: Try to get from subjectDetails.sclassName._id (existing behavior)
+  // Fallback: Use classID from navigation state if primary source is unavailable
+  const teachSclass = subjectDetails?.sclassName?._id ?? classIDFromState
 
   const fields = { name, email, password, role, school, teachSubject, teachSclass }
 
   const submitHandler = (event) => {
     event.preventDefault()
+    
+    // Validation: Check if teachSclass is defined
+    if (!teachSclass) {
+      setMessage("Unable to determine class information. Please try again or contact support.")
+      setShowPopup(true)
+      console.warn('AddTeacher: teachSclass is undefined. subjectDetails:', subjectDetails, 'classIDFromState:', classIDFromState)
+      return
+    }
+    
     setLoader(true)
     dispatch(registerUser(fields, role))
   }

@@ -44,7 +44,7 @@ const EditTeacher = () => {
             fields.password = password;
         }
 
-        dispatch(updateUser(teacherID, fields, 'Teacher'))
+        dispatch(updateUser(fields, teacherID, 'Teacher'))
             .then(() => {
                 setMessage('Teacher updated successfully');
                 setShowPopup(true);

@@ -19,8 +19,19 @@ const ForgotPassword = () => {
     const [message, setMessage] = useState("");
     const [emailError, setEmailError] = useState(false);
 
+    // Validate role parameter
+    const validRoles = ['Admin', 'Teacher', 'Student'];
+    const isValidRole = role && validRoles.includes(role);
+
     const handleSubmit = async (event) => {
         event.preventDefault();
+        
+        if (!isValidRole) {
+            setMessage('Invalid role. Please access this page from the login page.');
+            setShowPopup(true);
+            return;
+        }
+
         const email = event.target.email.value;
 
         if (!email) {
@@ -54,6 +65,57 @@ const ForgotPassword = () => {
         setEmailError(false);
     };
 
+    // Redirect if invalid role
+    if (!isValidRole) {
+        return (
+            <ThemeProvider theme={defaultTheme}>
+                <Grid container component="main" sx={{ height: '100vh' }}>
+                    <CssBaseline />
+                    <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
+                        <Box
+                            sx={{
+                                my: 8,
+                                mx: 4,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Typography variant="h4" sx={{ mb: 2, color: "#2c2143" }}>
+                                Invalid Access
+                            </Typography>
+                            <Typography variant="body1" sx={{ mb: 3, textAlign: 'center', color: '#666' }}>
+                                Please access the forgot password page from the login page.
+                            </Typography>
+                            <LightPurpleButton
+                                fullWidth
+                                variant="contained"
+                                onClick={() => navigate('/')}
+                                sx={{ mt: 2 }}
+                            >
+                                Go to Home
+                            </LightPurpleButton>
+                        </Box>
+                    </Grid>
+                    <Grid
+                        item
+                        xs={false}
+                        sm={4}
+                        md={7}
+                        sx={{
+                            backgroundImage: `url(${bgpic})`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundColor: (t) =>
+                                t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                        }}
+                    />
+                </Grid>
+            </ThemeProvider>
+        );
+    }
+
     return (
         <ThemeProvider theme={defaultTheme}>
             <Grid container component="main" sx={{ height: '100vh' }}>
@@ -71,9 +133,11 @@ const ForgotPassword = () => {
                         <Typography variant="h4" sx={{ mb: 2, color: "#2c2143" }}>
                             Forgot Password
                         </Typography>
-                        <Typography variant="body1" sx={{ mb: 3, textAlign: 'center', color: '#666' }}>
-                            Enter your email address and we'll help you reset your password.
-                            An administrator will contact you shortly.
+                        <Typography variant="body1" sx={{ mb: 2, textAlign: 'center', color: '#666' }}>
+                            Enter your email address below.
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 3, textAlign: 'center', color: '#ff9800', fontWeight: 'bold' }}>
+                            Note: An administrator will need to reset your password. You will be contacted shortly.
                         </Typography>
                         <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
                             <TextField

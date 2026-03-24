@@ -81,7 +81,7 @@ const ChooseSubject = ({ situation }) => {
                                     <StyledTableCell align="center">
                                         {situation === "Norm" ?
                                             <GreenButton variant="contained"
-                                                onClick={() => navigate("/Admin/teachers/addteacher/" + subject._id)}>
+                                                onClick={() => navigate("/Admin/teachers/addteacher/" + subject._id, { state: { classID: classID } })}>
                                                 Choose
                                             </GreenButton>
                                             :

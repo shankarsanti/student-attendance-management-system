@@ -23,6 +23,13 @@ import TeacherHomePage from './TeacherHomePage';
 import TeacherProfile from './TeacherProfile';
 import TeacherViewStudent from './TeacherViewStudent';
 import StudentExamMarks from '../admin/studentRelated/StudentExamMarks';
+import TeacherTests from './TeacherTests';
+import TeacherCreateTest from './TeacherCreateTest';
+import TeacherTestResults from './TeacherTestResults';
+import TeacherLessons from './TeacherLessons';
+import TeacherCreateLesson from './TeacherCreateLesson';
+import TeacherLessonDetail from './TeacherLessonDetail';
+import TeacherAttendance from './TeacherAttendance';
 
 const TeacherDashboard = () => {
     const [open, setOpen] = useState(true);
@@ -86,6 +93,16 @@ const TeacherDashboard = () => {
 
                         <Route path="/Teacher/class/student/attendance/:studentID/:subjectID" element={<StudentAttendance situation="Subject" />} />
                         <Route path="/Teacher/class/student/marks/:studentID/:subjectID" element={<StudentExamMarks situation="Subject" />} />
+
+                        <Route path="/Teacher/tests" element={<TeacherTests />} />
+                        <Route path="/Teacher/tests/create" element={<TeacherCreateTest />} />
+                        <Route path="/Teacher/tests/results/:testId" element={<TeacherTestResults />} />
+
+                        <Route path="/Teacher/lessons" element={<TeacherLessons />} />
+                        <Route path="/Teacher/lessons/create" element={<TeacherCreateLesson />} />
+                        <Route path="/Teacher/lessons/detail/:lessonId" element={<TeacherLessonDetail />} />
+
+                        <Route path="/Teacher/attendance" element={<TeacherAttendance />} />
 
                         <Route path="/logout" element={<Logout />} />
                     </Routes>

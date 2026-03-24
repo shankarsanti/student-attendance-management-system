@@ -7,6 +7,9 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useSelector } from 'react-redux';
 
 const TeacherSideBar = () => {
@@ -28,6 +31,24 @@ const TeacherSideBar = () => {
                         <ClassOutlinedIcon color={location.pathname.startsWith("/Teacher/class") ? 'primary' : 'inherit'} />
                     </ListItemIcon>
                     <ListItemText primary={`Class ${sclassName.sclassName}`} />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Teacher/lessons">
+                    <ListItemIcon>
+                        <MenuBookOutlinedIcon color={location.pathname.startsWith("/Teacher/lessons") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Lessons" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Teacher/tests">
+                    <ListItemIcon>
+                        <AssignmentOutlinedIcon color={location.pathname.startsWith("/Teacher/tests") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Tests" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Teacher/attendance">
+                    <ListItemIcon>
+                        <CheckCircleIcon color={location.pathname.startsWith("/Teacher/attendance") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Attendance Report" />
                 </ListItemButton>
                 <ListItemButton component={Link} to="/Teacher/complain">
                     <ListItemIcon>

@@ -25,6 +25,8 @@ const {
 const { subjectCreate, classSubjects, deleteSubjectsByClass, getSubjectDetail, deleteSubject, freeSubjectList, allSubjects, deleteSubjects } = require('../controllers/subject-controller.js');
 const { teacherRegister, teacherLogIn, getTeachers, getTeacherDetail, deleteTeachers, deleteTeachersByClass, deleteTeacher, updateTeacher, updateTeacherSubject, addTeacherSubject, removeTeacherSubject, teacherAttendance } = require('../controllers/teacher-controller.js');
 const { createFeeStructure, getFeeStructures, getFeeStructure, updateFeeStructure, deleteFeeStructure, recordPayment, getPaymentHistory, getStudentPayments, getStudentFeeStatus, deletePayment, getFeeDefaulters } = require('../controllers/fee-controller.js');
+const { createTest, getTestsByTeacher, getTestsByClass, getTestDetail, updateTest, deleteTest, updateTestResult, getTestsByStudent } = require('../controllers/test-controller.js');
+const { createLesson, getLessonsByTeacher, getLessonsByClass, getLessonsByDateRange, getLessonDetail, updateLesson, deleteLesson, markLessonAttendance, getTodayLessons, getUpcomingLessons } = require('../controllers/lesson-controller.js');
 
 // Admin
 router.post('/AdminReg', adminRegister);
@@ -140,5 +142,29 @@ router.get('/StudentFeeStatus/:id', getStudentFeeStatus);
 router.delete('/FeePayment/:id', deletePayment);
 
 router.get('/FeeDefaulters/:id', getFeeDefaulters);
+
+// Test Management
+
+router.post('/TestCreate', createTest);
+router.get('/TestsByTeacher/:id', getTestsByTeacher);
+router.get('/TestsByClass/:id', getTestsByClass);
+router.get('/TestsByStudent/:id', getTestsByStudent);
+router.get('/Test/:id', getTestDetail);
+router.put('/Test/:id', updateTest);
+router.delete('/Test/:id', deleteTest);
+router.post('/TestResult', updateTestResult);
+
+// Lesson Management
+
+router.post('/LessonCreate', createLesson);
+router.get('/LessonsByTeacher/:id', getLessonsByTeacher);
+router.get('/LessonsByClass/:id', getLessonsByClass);
+router.get('/LessonsByDateRange', getLessonsByDateRange);
+router.get('/Lesson/:id', getLessonDetail);
+router.put('/Lesson/:id', updateLesson);
+router.delete('/Lesson/:id', deleteLesson);
+router.post('/LessonAttendance', markLessonAttendance);
+router.get('/TodayLessons/:id', getTodayLessons);
+router.get('/UpcomingLessons/:id', getUpcomingLessons);
 
 module.exports = router;

@@ -49,7 +49,7 @@ const EditNotice = () => {
             date,
         };
 
-        dispatch(updateUser(noticeID, fields, 'Notice'))
+        dispatch(updateUser(fields, noticeID, 'Notice'))
             .then(() => {
                 setMessage('Notice updated successfully');
                 setShowPopup(true);

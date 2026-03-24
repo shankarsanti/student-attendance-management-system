@@ -8,6 +8,8 @@ import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined
 import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 
 const StudentSideBar = () => {
     const location = useLocation();
@@ -31,6 +33,18 @@ const StudentSideBar = () => {
                         <ClassOutlinedIcon color={location.pathname.startsWith("/Student/attendance") ? 'primary' : 'inherit'} />
                     </ListItemIcon>
                     <ListItemText primary="Attendance" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Student/tests">
+                    <ListItemIcon>
+                        <AssignmentTurnedInIcon color={location.pathname.startsWith("/Student/tests") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Tests & Exams" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Student/lessons">
+                    <ListItemIcon>
+                        <MenuBookIcon color={location.pathname.startsWith("/Student/lessons") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Lessons Schedule" />
                 </ListItemButton>
                 <ListItemButton component={Link} to="/Student/complain">
                     <ListItemIcon>
