@@ -16,268 +16,532 @@ Access records, view marks, and communicate effortlessly.
   <a href="https://www.linkedin.com/in/yogndrr/">LinkedIn</a>
 </p>
 
-
 # About
 
-The School Management System is a web-based application built using the MERN (MongoDB, Express.js, React.js, Node.js) stack. It aims to streamline school management, class organization, and facilitate communication between students, teachers, and administrators.
+The School Management System is a comprehensive web-based application built using the MERN (MongoDB, Express.js, React.js, Node.js) stack. It streamlines school management, class organization, and facilitates seamless communication between students, teachers, and administrators.
 
-## Features
+## ✨ Key Features
 
-- **User Roles:** The system supports three user roles: Admin, Teacher, and Student. Each role has specific functionalities and access levels.
+### 👥 User Management
+- **Three User Roles:** Admin, Teacher, and Student with specific functionalities
+- **Admin Dashboard:** Complete control over students, teachers, classes, and subjects
+- **Profile Management:** Enhanced profile pages with modern UI for all user types
 
-- **Admin Dashboard:** Administrators can add new students and teachers, create classes and subjects, manage user accounts, and oversee system settings.
+### 📊 Academic Management
 
-- **Attendance Tracking:** Teachers can easily take attendance for their classes, mark students as present or absent, and generate attendance reports.
+#### For Teachers:
+- **Test/Exam Management:** Create, schedule, and conduct tests with automatic result calculation
+- **Lesson Scheduling:** Plan and organize lessons with topics, objectives, materials, and homework
+- **Attendance Tracking:** Mark and track student attendance with comprehensive reports
+- **Performance Assessment:** Provide marks, feedback, and track student progress
+- **Attendance Reports:** Filter by date range, view statistics, and search students
 
-- **Performance Assessment:** Teachers can assess students' performance by providing marks and feedback. Students can view their marks and track their progress over time.
+#### For Students:
+- **Test View:** View scheduled tests, completed tests, marks, and performance
+- **Lesson Access:** See today's lessons, upcoming lessons, and lesson details
+- **Performance Tracking:** Visualize academic performance through interactive charts
+- **Attendance View:** Check attendance records and percentage
 
-- **Data Visualization:** Students can visualize their performance data through interactive charts and tables, helping them understand their academic performance at a glance.
+### 💰 Fee Management System
 
-- **Communication:** Users can communicate effortlessly through the system. Teachers can send messages to students and vice versa, promoting effective communication and collaboration.
+#### Admin Features:
+- **Fee Structure Management:** Create, update, and delete fee structures
+- **Payment Settings:** Configure multiple payment methods (UPI, PhonePe, Paytm, Bank Transfer)
+- **Auto QR Code Generation:** Automatically generate QR codes from UPI ID
+- **Payment History:** View all payments across the school
+- **Fee Defaulters:** Track students with pending fees
 
-## Technologies Used
+#### Student Features:
+- **Fee Dashboard:** View all assigned fee structures with individual status
+- **Multiple Payment Methods:** Pay via UPI, PhonePe, Paytm, QR Code, or Bank Transfer
+- **Payment History:** Track all payments made
+- **PDF Receipt Download:** Generate and download professional payment receipts
+- **Real-time Updates:** Refresh button to get latest payment settings
 
-- Frontend: React.js, Material UI, Redux
-- Backend: Node.js, Express.js
-- Database: MongoDB
+### 📄 Payment Receipt System
+- **Professional PDF Receipts:** Auto-generated receipts with school branding
+- **Complete Information:** Student details, payment info, fee breakdown
+- **Amount in Words:** Indian numbering format (Lakhs, Thousands)
+- **Unique Filenames:** Timestamped receipts for easy organization
+- **Print Ready:** High-quality PDF format for printing
 
-## Documentation
+### 📱 Communication
+- **Notice Board:** Administrators can post notices for students and teachers
+- **Complain System:** Students can submit complaints and track their status
+- **Direct Messaging:** Effective communication between all user types
 
+### 📈 Data Visualization
+- **Interactive Charts:** Students visualize performance through charts and graphs
+- **Attendance Analytics:** Color-coded performance indicators (Green/Yellow/Red)
+- **Dashboard Cards:** Modern, clickable cards with real-time data
+- **Progress Tracking:** Track academic progress over time
+
+## 🚀 New Features (Latest Update)
+
+### Fee Management Enhancements
+- ✅ Multiple fee structures support (Tuition, Exam, Library, etc.)
+- ✅ Aggregated fee display showing all fees at once
+- ✅ Individual status tracking per fee (Paid/Partial/Pending)
+- ✅ Grand total calculation across all fees
+- ✅ Delete fee structures with confirmation dialog
+
+### Payment System
+- ✅ Auto QR code generation from UPI ID
+- ✅ Multiple payment gateway support
+- ✅ Real-time payment method updates
+- ✅ Professional PDF receipt generation
+- ✅ Amount to words conversion (Indian format)
+
+### UI/UX Improvements
+- ✅ Enhanced profile pages with gradient headers
+- ✅ Modern card-based layouts
+- ✅ Color-coded status indicators
+- ✅ Responsive design for all screen sizes
+- ✅ Improved navigation and user flow
+
+## 🛠 Technologies Used
+
+### Frontend
+- **React.js** - UI library
+- **Material-UI (MUI)** - Component library
+- **Redux Toolkit** - State management
+- **Axios** - HTTP client
+- **React Router** - Navigation
+- **Recharts** - Data visualization
+- **jsPDF** - PDF generation
+- **QRCode** - QR code generation
+
+### Backend
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **MongoDB** - Database
+- **Mongoose** - ODM
+- **JWT** - Authentication
+- **bcrypt** - Password hashing
+
+## 📚 Documentation
+
+### Quick Start
 - [Quick Start Guide](docs/QUICK_START.md) - Get started in minutes
-- [Project Structure](docs/PROJECT_STRUCTURE.md) - Complete directory structure and organization
-- [Scripts Guide](docs/SCRIPTS_GUIDE.md) - All utility scripts and their usage
-- [Seed Data Instructions](docs/SEED_DATA_INSTRUCTIONS.md) - Database seeding guide
-- [Contributing Guidelines](docs/CONTRIBUTING.md) - How to contribute to the project
+- [Installation Guide](#installation) - Detailed setup instructions
 
-<br>
+### Feature Documentation
+- [Payment System Guide](PAYMENT_FEATURE_COMPLETE_GUIDE.md) - Complete payment system documentation
+- [Payment Receipt Feature](PAYMENT_RECEIPT_FEATURE.md) - Receipt generation guide
+- [Test Management](TEST_FEATURE_SUMMARY.md) - Test/exam system documentation
+- [Lesson Scheduling](LESSON_SCHEDULING_FEATURE_SUMMARY.md) - Lesson planning guide
+- [Student Features](STUDENT_TESTS_LESSONS_FEATURE_SUMMARY.md) - Student-side features
 
-# Project Structure
+### Technical Documentation
+- [Project Structure](docs/PROJECT_STRUCTURE.md) - Directory structure
+- [Scripts Guide](docs/SCRIPTS_GUIDE.md) - Utility scripts
+- [Seed Data Instructions](docs/SEED_DATA_INSTRUCTIONS.md) - Database seeding
+- [MongoDB Connection Fix](MONGODB_CONNECTION_FIX.md) - Database setup troubleshooting
 
-The project follows a clean, organized structure:
+### Bug Fixes & Updates
+- [Fee Structure Delete Fix](FEE_STRUCTURE_DELETE_FIX.md)
+- [Fee Structure Display Fix](FEE_STRUCTURE_DISPLAY_FIX.md)
+- [Payment Troubleshooting](PAYMENT_TROUBLESHOOTING.md)
+
+## 📁 Project Structure
 
 ```
 MERN-School-Management-System/
-├── backend/          # Node.js/Express backend
-├── frontend/         # React frontend
-├── scripts/          # Utility scripts
-└── docs/            # Documentation
+├── backend/
+│   ├── controllers/          # Business logic
+│   │   ├── admin-controller.js
+│   │   ├── student_controller.js
+│   │   ├── teacher-controller.js
+│   │   ├── fee-controller.js
+│   │   ├── test-controller.js
+│   │   ├── lesson-controller.js
+│   │   └── payment-settings-controller.js
+│   ├── models/              # Database schemas
+│   │   ├── studentSchema.js
+│   │   ├── teacherSchema.js
+│   │   ├── feeStructureSchema.js
+│   │   ├── feePaymentSchema.js
+│   │   ├── testSchema.js
+│   │   ├── lessonSchema.js
+│   │   └── paymentSettingsSchema.js
+│   ├── routes/              # API routes
+│   ├── middleware/          # Authentication middleware
+│   ├── scripts/             # Utility scripts
+│   │   ├── seed-data.js
+│   │   ├── test-payment-settings.js
+│   │   ├── check-student-fees.js
+│   │   └── test-mongodb-connection.js
+│   └── index.js             # Entry point
+│
+├── frontend/
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── admin/       # Admin pages
+│   │   │   │   ├── PaymentSettings.js
+│   │   │   │   └── feeRelated/
+│   │   │   ├── teacher/     # Teacher pages
+│   │   │   │   ├── TeacherTests.js
+│   │   │   │   ├── TeacherLessons.js
+│   │   │   │   └── TeacherAttendance.js
+│   │   │   └── student/     # Student pages
+│   │   │       ├── StudentFees.js
+│   │   │       ├── StudentTests.js
+│   │   │       └── StudentLessons.js
+│   │   ├── components/      # Reusable components
+│   │   ├── redux/           # State management
+│   │   └── App.js
+│   └── package.json
+│
+└── docs/                    # Documentation
 ```
 
-For detailed structure information, see [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
+# 🚀 Installation
 
-# Installation
+## Prerequisites
+- Node.js (v14 or higher)
+- MongoDB (local or Atlas)
+- npm or yarn
 
-Clone the project:
+## Clone the Repository
 
-```
-git clone https://github.com/Yogndrr/MERN-School-Management-System.git
-```
-
-There are three branches in this repository. Each serves a different purpose.
-
-`main` contains the work that reflects my current standards. I am rebuilding the project architecture here with updated patterns, cleaner structure, and better practices than the original version.
-
-`community-version` collects community contributions and external PRs. It stays separate from main while I rebuild the core.
-
-`legacy-version` contains the same code shown in the YouTube tutorial. If you came from the video and want the exact version demonstrated there, switch to this branch after cloning.
-Open a terminal and paste this command to switch to the `legacy-version` branch. But if you want to try the latest one then you can stay in the main branch.
-
-```
-git checkout legacy-version
+```bash
+git clone https://github.com/shankarsanti/student-attendance-management-system.git
+cd MERN-School-Management-System
 ```
 
-Open two terminals.
+## Backend Setup
 
-Backend setup:
-
-```
+1. Navigate to backend folder:
+```bash
 cd backend
 npm install
 ```
 
-Create a .env file in the backend folder. Add the following:
-
+2. Create `.env` file in backend folder:
+```env
+MONGO_URL=mongodb://127.0.0.1:27017/smsproject
+SECRET_KEY=secret123key
+PORT=5001
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production-2024
+FRONTEND_URL=http://localhost:3000
 ```
-MONGO_URL = mongodb://127.0.0.1/smsproject
 
-SECRET_KEY = 'secret123key'
-```
-
-Fill MONGO_URL using the instructions below. SECRET_KEY is any random string.
-
-Start the backend:
-
-```
+3. Start the backend:
+```bash
 npm start
 ```
 
-Frontend setup:
+Backend runs at `http://localhost:5001`
 
-```
+## Frontend Setup
+
+1. Navigate to frontend folder:
+```bash
 cd frontend
 npm install
 ```
 
-Create a .env file in the frontend folder and add:
-
+2. Create `.env` file in frontend folder:
+```env
+REACT_APP_BASE_URL=http://localhost:5001
 ```
-REACT_APP_BASE_URL=http://localhost:5000
-```
 
-If a .env file already exists and the line is commented out, remove the comment.
-
-```
+3. Start the frontend:
+```bash
 npm start
 ```
 
-Frontend runs at localhost:3000. Backend runs at localhost:5001.
+Frontend runs at `http://localhost:3000`
 
-## Quick Start with Scripts
+## 🗄️ Database Setup
 
-For convenience, you can use the provided utility scripts:
+### Option 1: Local MongoDB (Recommended for Development)
+
+1. Install MongoDB Community Server from [mongodb.com](https://mongodb.com/try/download/community)
+
+2. Start MongoDB service:
+```bash
+# macOS
+brew services start mongodb-community
+
+# Windows
+net start MongoDB
+
+# Linux
+sudo systemctl start mongod
+```
+
+3. Use connection string:
+```
+MONGO_URL=mongodb://127.0.0.1:27017/smsproject
+```
+
+### Option 2: MongoDB Atlas (Cloud)
+
+1. Create account at [mongodb.com/atlas](https://mongodb.com/atlas)
+2. Create a free cluster
+3. Get connection string from: Database → Connect → Connect your application
+4. Update `.env`:
+```
+MONGO_URL=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/smsproject?retryWrites=true&w=majority
+```
+
+### Seed Database (Optional)
+
+Populate database with sample data:
 
 ```bash
-# Start everything (MongoDB, backend, frontend)
-bash scripts/start-all.sh
-
-# Restart with clean state
-bash scripts/restart-app.sh
-
-# Diagnose login issues
-bash scripts/diagnose-login.sh
-
-# Seed database with sample data
 cd backend
 node scripts/seed-data.js
 ```
 
-For detailed seeding instructions, see [docs/SEED_DATA_INSTRUCTIONS.md](docs/SEED_DATA_INSTRUCTIONS.md)
+This creates:
+- 1 Admin account
+- 5 Classes
+- 10 Teachers
+- 50 Students
+- Multiple subjects, tests, and lessons
 
-# MONGO_URL instructions
+## 🧪 Testing the Application
 
-Use one of these two methods depending on whether you want a local development database or a cloud database.
-
-## Option 1 — Local MongoDB
-
-You need two components: the MongoDB server and Compass.
-
-Install MongoDB Community Server from <a href="https://mongodb.com/try/download/community">mongodb.com/try/download/community</a>. This install includes the mongod server. Install Compass from <a href="https://mongodb.com/try/download/compass">mongodb.com/try/download/compass</a>..
-
-Start the MongoDB service. On Windows or macOS the installer usually sets it to run automatically. If it is not running, you can start it manually:
-
-```
-mongod
+### Test MongoDB Connection
+```bash
+cd backend
+node scripts/test-mongodb-connection.js
 ```
 
-Open Compass. Connect using:
-
-```
-mongodb://127.0.0.1:27017/yourdbname
-```
-
-Replace yourdbname with any name. Use that full connection string as your MONGO_URL.
-
-## Option 2 — MongoDB Atlas (cloud)
-
-Create an Atlas account at <a href="https://mongodb.com/atlas">mongodb.com/atlas</a> and create a free cluster.
-
-In the cluster page, select:
-
-Database → Connect → Connect your application
-
-Atlas shows you a connection string:
-
-```
-mongodb+srv://<user>:<password>@<cluster-url>/<dbname>?retryWrites=true&w=majority
+### Test Payment Settings
+```bash
+cd backend
+node scripts/test-payment-settings.js
 ```
 
-Replace the placeholders. Use that full string as your MONGO_URL.
-
-Use Atlas if you plan to deploy the project.
-
-# Branch selection
-
-If you are learning from the YouTube video and want the same project the tutorial was based on, use legacy-version.
-
-If you want the original project but also want to apply new changes yourself, stay on legacy-version and modify it as needed.
-
-If you want the updated architecture, use main. This is under active development and contains major improvements.
-
-If you want to contribute, use community-version. All external PRs land there.
-
-# Deployment
-
-There are multiple ways to deploy the project. Use any combination depending on how you prefer to manage the client and server.
-
-## Deploying the backend
-
-### Render
-
-Render works well for Express-based APIs and requires almost no infrastructure setup.
-
-1. Push your code to GitHub.
-2. Create a new Web Service in Render.
-3. Select your backend folder as the root.
-4. Set the build command to:
-
+### Check Student Fees
+```bash
+cd backend
+node scripts/check-student-fees.js
 ```
+
+## 🎯 Quick Start Guide
+
+### 1. Admin Login
+- Email: `admin@school.com`
+- Password: `admin123`
+
+### 2. Teacher Login
+- Email: `teacher@school.com`
+- Password: `teacher123`
+
+### 3. Student Login
+- Email: `student@school.com`
+- Password: `student123`
+
+### 4. Test Payment System
+1. Login as Admin
+2. Go to "Payment Settings"
+3. Configure payment methods (UPI, PhonePe, Paytm)
+4. Login as Student
+5. Go to "Fee Payment"
+6. Make a test payment
+7. Download receipt
+
+## 🌟 Key Features Walkthrough
+
+### For Administrators
+
+1. **Dashboard**: Overview of students, teachers, classes, and subjects
+2. **Student Management**: Add, edit, delete students
+3. **Teacher Management**: Manage teacher accounts and assignments
+4. **Class Management**: Create and organize classes
+5. **Subject Management**: Add subjects and assign to classes
+6. **Fee Management**: 
+   - Create fee structures
+   - Configure payment methods
+   - View payment history
+   - Track fee defaulters
+7. **Notice Board**: Post announcements
+8. **Reports**: Generate various reports
+
+### For Teachers
+
+1. **Dashboard**: Overview of classes and students
+2. **Test Management**:
+   - Create tests with multiple questions
+   - Schedule tests for classes
+   - Enter marks and calculate results
+   - View test analytics
+3. **Lesson Planning**:
+   - Schedule lessons with topics and objectives
+   - Add materials and homework
+   - Track lesson completion
+4. **Attendance**:
+   - Mark daily attendance
+   - View attendance reports
+   - Filter by date range
+   - Search students
+5. **Performance Tracking**: Monitor student progress
+
+### For Students
+
+1. **Dashboard**: Overview of tests, lessons, and attendance
+2. **Tests**:
+   - View scheduled tests
+   - See test results and marks
+   - Track performance with color indicators
+3. **Lessons**:
+   - View today's lessons
+   - See upcoming lessons
+   - Access lesson materials and homework
+4. **Fee Payment**:
+   - View all fee structures
+   - See payment status (Paid/Partial/Pending)
+   - Make payments via multiple methods
+   - Download PDF receipts
+5. **Attendance**: Check attendance records
+6. **Subjects**: View enrolled subjects
+7. **Notices**: Read school announcements
+
+## 🎨 UI Features
+
+- **Modern Design**: Clean, professional interface with Material-UI
+- **Responsive**: Works on desktop, tablet, and mobile
+- **Dark Mode Ready**: Prepared for dark mode implementation
+- **Color Coding**: 
+  - 🟢 Green: Good performance (≥75%)
+  - 🟡 Yellow: Average (50-74%)
+  - 🔴 Red: Needs improvement (<50%)
+- **Interactive Charts**: Visual data representation
+- **Real-time Updates**: Live data refresh
+- **Smooth Animations**: Enhanced user experience
+
+## 🔒 Security Features
+
+- **JWT Authentication**: Secure token-based auth
+- **Password Hashing**: bcrypt encryption
+- **Role-based Access**: Different permissions for each role
+- **Protected Routes**: Unauthorized access prevention
+- **Input Validation**: Server-side validation
+- **XSS Protection**: Sanitized inputs
+
+## 📱 Responsive Design
+
+The application is fully responsive and works seamlessly on:
+- 💻 Desktop (1920px and above)
+- 💻 Laptop (1366px - 1920px)
+- 📱 Tablet (768px - 1366px)
+- 📱 Mobile (320px - 768px)
+
+## 🚀 Deployment
+
+### Backend Deployment (Render)
+
+1. Push code to GitHub
+2. Create new Web Service on Render
+3. Connect repository
+4. Set build command: `npm install`
+5. Set start command: `npm start`
+6. Add environment variables from `.env`
+7. Deploy
+
+### Frontend Deployment (Netlify)
+
+1. Push code to GitHub
+2. Create new site on Netlify
+3. Connect repository
+4. Set build command: `npm run build`
+5. Set publish directory: `build`
+6. Add environment variable: `REACT_APP_BASE_URL=https://your-backend-url`
+7. Deploy
+
+### Alternative: Vercel
+
+Same process as Netlify with similar configuration.
+
+## 🐛 Troubleshooting
+
+### MongoDB Connection Issues
+See [MONGODB_CONNECTION_FIX.md](MONGODB_CONNECTION_FIX.md)
+
+### Payment System Issues
+See [PAYMENT_TROUBLESHOOTING.md](PAYMENT_TROUBLESHOOTING.md)
+
+### Common Issues
+
+**Port already in use:**
+```bash
+# Kill process on port 5001 (backend)
+lsof -ti:5001 | xargs kill -9
+
+# Kill process on port 3000 (frontend)
+lsof -ti:3000 | xargs kill -9
+```
+
+**MongoDB not connecting:**
+```bash
+# Check MongoDB status
+brew services list | grep mongodb
+
+# Restart MongoDB
+brew services restart mongodb-community
+```
+
+**Dependencies issues:**
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
 npm install
 ```
 
-5. Set the start command to:
+## 🤝 Contributing
 
-```
-npm start
-```
+Contributions are welcome! Please follow these steps:
 
-6. Add the required environment variables from your .env file (MONGO_URL and SECRET_KEY).
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-Render automatically redeploys on every push.
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
-## Deploying the frontend
+## 📝 License
 
-### Netlify
+This project is open source and available under the MIT License.
 
-Netlify builds and serves the React application.
+## 👨‍💻 Author
 
-Steps:
+**Shankar Laxman Santi**
+- GitHub: [@shankarsanti](https://github.com/shankarsanti)
+- Repository: [student-attendance-management-system](https://github.com/shankarsanti/student-attendance-management-system)
 
-1. Push your frontend folder to GitHub.
-2. Create a new Netlify project.
-3. Set the build command:
+## 🙏 Acknowledgments
 
-```
-npm run build
-```
+- Original project inspiration from [Yogndrr](https://github.com/Yogndrr)
+- Material-UI for the component library
+- MongoDB for the database
+- All contributors and users
 
-4. Set the publish directory:
+## 📞 Support
 
-```
-build
-```
+For support, email shankarsanti@example.com or open an issue on GitHub.
 
-5. Add an environment variable if needed for the API endpoint:
+## 🔄 Version History
 
-```
-REACT_APP_BASE_URL=https://your-backend-url
-```
+### v2.0.0 (Latest) - March 2026
+- ✅ Complete fee management system
+- ✅ Payment gateway integration
+- ✅ PDF receipt generation
+- ✅ Test/exam management
+- ✅ Lesson scheduling
+- ✅ Enhanced UI/UX
+- ✅ Multiple bug fixes
 
-Netlify auto-builds on every push.
+### v1.0.0 - Initial Release
+- Basic school management features
+- Student, teacher, admin roles
+- Attendance tracking
+- Performance assessment
 
-### Vercel
+---
 
-Vercel deploys React-based frontends easily. Same build command. Same publish directory.
-
-## Connecting frontend and backend
-
-After deploying both sides, set the frontend environment variable to point to your backend URL. For example:
-
-```
-REACT_APP_BASE_URL=https://your-backend.onrender.com
-```
-
-Rebuild the frontend when deploying to Netlify or Vercel.
-
-# Notes
-
-The legacy-version branch remains available for anyone who needs the original two-year-old tutorial code. The main branch will continue to evolve as I rebuild the project's architecture using the practices I use today. The community-version branch is available for contributions without affecting the core redesign.
+<p align="center">Made with ❤️ for better school management</p>
