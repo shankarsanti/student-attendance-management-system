@@ -20,6 +20,13 @@ Access records, view marks, and communicate effortlessly.
 
 The School Management System is a comprehensive web-based application built using the MERN (MongoDB, Express.js, React.js, Node.js) stack. It streamlines school management, class organization, and facilitates seamless communication between students, teachers, and administrators.
 
+## 🚀 Quick Links
+
+- **[Quick Deployment Guide](QUICK_DEPLOY.md)** - Deploy in 10 minutes
+- **[Detailed Deployment Guide](DEPLOYMENT_GUIDE.md)** - Complete deployment instructions
+- **[Fix 404 Errors](VERCEL_DEPLOYMENT_FIX.md)** - Troubleshoot deployment issues
+- **[Run Deployment Check](check-deployment.sh)** - Verify your setup before deploying
+
 ## ✨ Key Features
 
 ### 👥 User Management
@@ -491,6 +498,33 @@ brew services restart mongodb-community
 rm -rf node_modules package-lock.json
 npm install
 ```
+
+## 🚀 Deployment
+
+### Quick Deployment (10 minutes)
+
+Follow the **[Quick Deployment Guide](QUICK_DEPLOY.md)** for a streamlined deployment process.
+
+### Detailed Deployment
+
+For comprehensive deployment instructions, see **[Deployment Guide](DEPLOYMENT_GUIDE.md)**.
+
+### Troubleshooting
+
+Getting 404 errors after deployment? Check **[Vercel Deployment Fix](VERCEL_DEPLOYMENT_FIX.md)**.
+
+### Pre-Deployment Check
+
+Run the deployment checker before deploying:
+```bash
+./check-deployment.sh
+```
+
+### Deployment Platforms
+
+- **Backend:** Render, Railway, or Heroku
+- **Frontend:** Vercel or Netlify
+- **Database:** MongoDB Atlas (recommended for production)
 
 ## 🤝 Contributing
 
