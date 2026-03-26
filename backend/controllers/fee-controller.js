@@ -131,27 +131,48 @@ const getStudentPayments = async (req, res) => {
 
 const getStudentFeeStatus = async (req, res) => {
     try {
+        console.log('Fetching fee status for student:', req.params.id);
+        
         const student = await Student.findById(req.params.id).populate('sclassName');
         
         if (!student) {
+            console.log('Student not found');
             return res.status(404).json({ message: "Student not found" });
         }
+
+        console.log('Student found:', {
+            name: student.name,
+            class: student.sclassName?.sclassName,
+            classId: student.sclassName?._id,
+            school: student.school
+        });
 
         // Get all fee structures for student's class
         const feeStructures = await FeeStructure.find({
             $or: [
-                { class: student.sclassName._id },
+                { class: student.sclassName?._id },
                 { class: null }
             ],
             school: student.school
         }).populate('class', 'sclassName');
 
+        console.log('Fee structures found:', feeStructures.length);
+        feeStructures.forEach(fee => {
+            console.log('Fee:', {
+                name: fee.feeName,
+                amount: fee.amount,
+                class: fee.class?.sclassName || 'All Classes'
+            });
+        });
+
         if (feeStructures.length === 0) {
+            console.log('No fee structures found for student');
             return res.send({ message: "No fee structure found for this student" });
         }
 
         // Get all payments made by student
         const payments = await FeePayment.find({ student: req.params.id });
+        console.log('Payments found:', payments.length);
 
         // Calculate fee status
         const feeStatus = feeStructures.map(fee => {
@@ -168,6 +189,7 @@ const getStudentFeeStatus = async (req, res) => {
             };
         });
 
+        console.log('Returning fee status:', feeStatus.length, 'items');
         res.send(feeStatus);
     } catch (err) {
         console.error('Error in getStudentFeeStatus:', err);

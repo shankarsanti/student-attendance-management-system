@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from "react-router-dom";
-import { Paper, Box, IconButton, Typography, Tab, Tabs } from '@mui/material';
-import { getAllFeeStructures, getAllPayments, getFeeDefaulters } from '../../../redux/feeRelated/feeHandle';
+import { Paper, Box, IconButton, Typography, Tab, Tabs, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { getAllFeeStructures, getAllPayments, getFeeDefaulters, deleteFeeStructure, deletePayment } from '../../../redux/feeRelated/feeHandle';
 import TableTemplate from '../../../components/TableTemplate';
 import { BlueButton, GreenButton } from '../../../components/buttonStyles';
 import SpeedDialTemplate from '../../../components/SpeedDialTemplate';
@@ -17,6 +17,8 @@ const ShowFees = () => {
     const { feeStructuresList, paymentsList, feeDefaulters, loading } = useSelector((state) => state.fee);
 
     const [tabValue, setTabValue] = useState(0);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState({ id: null, type: null });
 
     useEffect(() => {
         dispatch(getAllFeeStructures(currentUser._id));
@@ -123,8 +125,40 @@ const ShowFees = () => {
     };
 
     const deleteHandler = (deleteID, address) => {
-        console.log(deleteID);
-        console.log(address);
+        setDeleteTarget({ id: deleteID, type: address });
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        const { id, type } = deleteTarget;
+        console.log('Deleting:', id, type);
+        
+        if (type === "FeeStructure") {
+            dispatch(deleteFeeStructure(id))
+                .then(() => {
+                    dispatch(getAllFeeStructures(currentUser._id));
+                    setDeleteDialogOpen(false);
+                })
+                .catch((error) => {
+                    console.error('Error deleting fee structure:', error);
+                    setDeleteDialogOpen(false);
+                });
+        } else if (type === "Payment") {
+            dispatch(deletePayment(id))
+                .then(() => {
+                    dispatch(getAllPayments(currentUser._id));
+                    setDeleteDialogOpen(false);
+                })
+                .catch((error) => {
+                    console.error('Error deleting payment:', error);
+                    setDeleteDialogOpen(false);
+                });
+        }
+    };
+
+    const cancelDelete = () => {
+        setDeleteDialogOpen(false);
+        setDeleteTarget({ id: null, type: null });
     };
 
     const actions = [
@@ -208,6 +242,25 @@ const ShowFees = () => {
                 )}
             </Box>
             <SpeedDialTemplate actions={actions} />
+            
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteDialogOpen} onClose={cancelDelete}>
+                <DialogTitle>Confirm Delete</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to delete this {deleteTarget.type === 'FeeStructure' ? 'fee structure' : 'payment'}? 
+                        This action cannot be undone.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={cancelDelete} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={confirmDelete} color="error" variant="contained">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };

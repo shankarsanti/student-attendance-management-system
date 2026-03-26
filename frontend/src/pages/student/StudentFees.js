@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import Popup from '../../components/Popup';
+import jsPDF from 'jspdf';
 
 const StudentFees = () => {
     const { currentUser } = useSelector(state => state.user);
@@ -88,6 +89,7 @@ const StudentFees = () => {
 
     const fetchFeeStatus = async () => {
         try {
+            console.log('Fetching fee status for student:', currentUser._id);
             const response = await axios.get(
                 `${process.env.REACT_APP_BASE_URL}/StudentFeeStatus/${currentUser._id}`
             );
@@ -96,24 +98,40 @@ const StudentFees = () => {
             if (response.data.message) {
                 console.log('No fee structure:', response.data.message);
                 setFeeStatus(null);
+                setLoading(false);
                 return;
             }
             
-            if (!response.data.message) {
-                // Backend returns an array, we'll use the first fee structure or aggregate
-                if (Array.isArray(response.data) && response.data.length > 0) {
-                    console.log('Fee structure found:', response.data[0]);
-                    // For now, use the first fee structure
-                    // In future, you might want to aggregate all fees
-                    setFeeStatus(response.data[0]);
-                } else {
-                    console.log('Empty fee structure array');
-                    setFeeStatus(null);
-                }
+            // Backend returns an array of fee structures
+            if (Array.isArray(response.data) && response.data.length > 0) {
+                console.log('Fee structures found:', response.data.length);
+                
+                // Aggregate all fees
+                const totalFee = response.data.reduce((sum, fee) => sum + (fee.feeStructure?.amount || fee.totalAmount || 0), 0);
+                const totalPaid = response.data.reduce((sum, fee) => sum + (fee.paidAmount || 0), 0);
+                const totalPending = totalFee - totalPaid;
+                
+                // Create aggregated fee status
+                const aggregatedStatus = {
+                    feeStructures: response.data, // Store all fee structures
+                    feeStructure: response.data[0].feeStructure, // Keep first for compatibility
+                    totalAmount: totalFee,
+                    paidAmount: totalPaid,
+                    pendingAmount: totalPending,
+                    status: totalPending === 0 ? 'Paid' : totalPaid > 0 ? 'Partial' : 'Pending'
+                };
+                
+                console.log('Aggregated fee status:', aggregatedStatus);
+                setFeeStatus(aggregatedStatus);
+            } else {
+                console.log('Empty fee structure array');
+                setFeeStatus(null);
             }
+            setLoading(false);
         } catch (error) {
             console.error('Error fetching fee status:', error);
             console.error('Error response:', error.response?.data);
+            setLoading(false);
         }
     };
 
@@ -206,6 +224,106 @@ const StudentFees = () => {
         }
     };
 
+    const downloadReceipt = (payment) => {
+        try {
+            const doc = new jsPDF();
+            
+            // Header
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PAYMENT RECEIPT', 105, 20, { align: 'center' });
+            
+            // School Info
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.text('School Management System', 105, 30, { align: 'center' });
+            
+            // Receipt Number
+            doc.setFontSize(10);
+            doc.text(`Receipt No: ${payment._id}`, 20, 45);
+            doc.text(`Date: ${new Date(payment.paymentDate).toLocaleDateString()}`, 20, 52);
+            
+            // Divider
+            doc.setLineWidth(0.5);
+            doc.line(20, 58, 190, 58);
+            
+            // Student Info
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Student Information', 20, 68);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(`Name: ${currentUser.name}`, 20, 76);
+            doc.text(`Roll Number: ${currentUser.rollNum}`, 20, 83);
+            doc.text(`Class: ${currentUser.sclassName?.sclassName || 'N/A'}`, 20, 90);
+            
+            // Payment Details
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Payment Details', 20, 105);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(`Amount Paid: ₹${payment.amountPaid || payment.amount || 0}`, 20, 113);
+            doc.text(`Payment Method: ${payment.paymentMethod}`, 20, 120);
+            doc.text(`Transaction ID: ${payment.transactionId || 'N/A'}`, 20, 127);
+            doc.text(`Payment Date: ${new Date(payment.paymentDate).toLocaleString()}`, 20, 134);
+            
+            // Fee Structure Info (if available)
+            if (payment.feeStructure) {
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Fee Information', 20, 149);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.text(`Fee Name: ${payment.feeStructure.feeName || 'N/A'}`, 20, 157);
+                doc.text(`Fee Type: ${payment.feeStructure.feeType || 'N/A'}`, 20, 164);
+            }
+            
+            // Amount in Words (simple implementation)
+            const amountInWords = numberToWords(payment.amountPaid || payment.amount || 0);
+            doc.setFontSize(10);
+            doc.text(`Amount in Words: ${amountInWords} Rupees Only`, 20, 180);
+            
+            // Footer
+            doc.setLineWidth(0.5);
+            doc.line(20, 190, 190, 190);
+            doc.setFontSize(8);
+            doc.text('This is a computer-generated receipt and does not require a signature.', 105, 197, { align: 'center' });
+            doc.text('For any queries, please contact the school office.', 105, 203, { align: 'center' });
+            
+            // Stamp/Seal area
+            doc.setFontSize(10);
+            doc.text('Authorized Signature', 150, 175);
+            doc.rect(145, 155, 40, 20); // Box for signature
+            
+            // Save PDF
+            doc.save(`Receipt_${payment._id}_${new Date().getTime()}.pdf`);
+            
+            setMessage('Receipt downloaded successfully!');
+            setShowPopup(true);
+        } catch (error) {
+            console.error('Error generating receipt:', error);
+            setMessage('Error generating receipt. Please try again.');
+            setShowPopup(true);
+        }
+    };
+
+    // Helper function to convert number to words (simplified)
+    const numberToWords = (num) => {
+        const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        
+        if (num === 0) return 'Zero';
+        if (num < 10) return ones[num];
+        if (num < 20) return teens[num - 10];
+        if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 !== 0 ? ' ' + ones[num % 10] : '');
+        if (num < 1000) return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 !== 0 ? ' ' + numberToWords(num % 100) : '');
+        if (num < 100000) return numberToWords(Math.floor(num / 1000)) + ' Thousand' + (num % 1000 !== 0 ? ' ' + numberToWords(num % 1000) : '');
+        if (num < 10000000) return numberToWords(Math.floor(num / 100000)) + ' Lakh' + (num % 100000 !== 0 ? ' ' + numberToWords(num % 100000) : '');
+        return num.toString();
+    };
+
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
@@ -214,10 +332,10 @@ const StudentFees = () => {
         );
     }
 
-    const totalFee = feeStatus?.feeStructure?.amount || feeStatus?.totalAmount || 0;
+    const totalFee = feeStatus?.totalAmount || 0;
     const paidAmount = feeStatus?.paidAmount || 0;
-    const pendingAmount = totalFee - paidAmount;
-    const paymentStatus = pendingAmount === 0 ? 'Paid' : paidAmount > 0 ? 'Partial' : 'Pending';
+    const pendingAmount = feeStatus?.pendingAmount || 0;
+    const paymentStatus = feeStatus?.status || (pendingAmount === 0 && totalFee > 0 ? 'Paid' : paidAmount > 0 ? 'Partial' : 'Pending');
 
     console.log('Fee calculation:', {
         totalFee,
@@ -325,39 +443,68 @@ const StudentFees = () => {
                 </Grid>
             </Grid>
 
-            {/* Fee Structure */}
-            {feeStatus?.feeStructure ? (
+            {/* Fee Structures */}
+            {feeStatus?.feeStructures && feeStatus.feeStructures.length > 0 ? (
                 <Paper sx={{ padding: 3, marginBottom: 3 }}>
                     <Typography variant="h6" gutterBottom>
-                        Fee Structure
+                        Fee Structures ({feeStatus.feeStructures.length})
                     </Typography>
                     <Divider sx={{ marginBottom: 2 }} />
+                    
+                    {feeStatus.feeStructures.map((feeItem, index) => (
+                        <Box key={index} sx={{ marginBottom: 3, padding: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12}>
+                                    <Typography variant="subtitle1" fontWeight="bold" color="primary">
+                                        {feeItem.feeStructure.feeName}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography><strong>Fee Type:</strong> {feeItem.feeStructure.feeType}</Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography><strong>Class:</strong> {feeItem.feeStructure.class?.sclassName || 'All Classes'}</Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography><strong>Frequency:</strong> {feeItem.feeStructure.frequency}</Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography><strong>Amount:</strong> ₹{feeItem.feeStructure.amount}</Typography>
+                                </Grid>
+                                {feeItem.feeStructure.dueDate && (
+                                    <Grid item xs={12} md={6}>
+                                        <Typography><strong>Due Date:</strong> {new Date(feeItem.feeStructure.dueDate).toLocaleDateString()}</Typography>
+                                    </Grid>
+                                )}
+                                <Grid item xs={12} md={6}>
+                                    <Typography>
+                                        <strong>Paid:</strong> ₹{feeItem.paidAmount} | 
+                                        <strong> Pending:</strong> ₹{feeItem.pendingAmount}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Chip 
+                                        label={feeItem.status} 
+                                        color={getStatusColor(feeItem.status)}
+                                        size="small"
+                                    />
+                                </Grid>
+                                {feeItem.feeStructure.description && (
+                                    <Grid item xs={12}>
+                                        <Typography><strong>Description:</strong> {feeItem.feeStructure.description}</Typography>
+                                    </Grid>
+                                )}
+                            </Grid>
+                        </Box>
+                    ))}
+                    
+                    <Divider sx={{ marginY: 2 }} />
                     <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
-                            <Typography><strong>Fee Name:</strong> {feeStatus.feeStructure.feeName}</Typography>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <Typography><strong>Fee Type:</strong> {feeStatus.feeStructure.feeType}</Typography>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <Typography><strong>Class:</strong> {feeStatus.feeStructure.class?.sclassName || 'All Classes'}</Typography>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <Typography><strong>Frequency:</strong> {feeStatus.feeStructure.frequency}</Typography>
-                        </Grid>
-                        {feeStatus.feeStructure.dueDate && (
-                            <Grid item xs={12} md={6}>
-                                <Typography><strong>Due Date:</strong> {new Date(feeStatus.feeStructure.dueDate).toLocaleDateString()}</Typography>
-                            </Grid>
-                        )}
-                        {feeStatus.feeStructure.description && (
-                            <Grid item xs={12}>
-                                <Typography><strong>Description:</strong> {feeStatus.feeStructure.description}</Typography>
-                            </Grid>
-                        )}
                         <Grid item xs={12}>
                             <Typography variant="h6" color="primary">
-                                <strong>Total Amount:</strong> ₹{feeStatus.feeStructure.amount || feeStatus.totalAmount}
+                                <strong>Grand Total:</strong> ₹{totalFee} | 
+                                <strong> Total Paid:</strong> ₹{paidAmount} | 
+                                <strong> Total Pending:</strong> ₹{pendingAmount}
                             </Typography>
                         </Grid>
                     </Grid>
@@ -435,11 +582,10 @@ const StudentFees = () => {
                                         <TableCell>
                                             <Button
                                                 size="small"
+                                                variant="outlined"
+                                                color="primary"
                                                 startIcon={<Receipt />}
-                                                onClick={() => {
-                                                    setMessage('Receipt download feature coming soon!');
-                                                    setShowPopup(true);
-                                                }}
+                                                onClick={() => downloadReceipt(payment)}
                                             >
                                                 Download
                                             </Button>
