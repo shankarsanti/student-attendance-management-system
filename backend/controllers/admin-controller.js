@@ -11,8 +11,8 @@ const Complain = require('../models/complainSchema.js');
 // Generate JWT token
 const generateToken = (user) => {
     return jwt.sign(
-        { id: user._id, role: user.role, email: user.email },
-        process.env.JWT_SECRET || 'your-secret-key',
+        { id: user._id, role: 'Admin', email: user.email },
+        process.env.JWT_SECRET,
         { expiresIn: '7d' }
     );
 };
@@ -43,7 +43,7 @@ const adminRegister = async (req, res) => {
             // Generate JWT token
             const token = generateToken(result);
             
-            res.send({ ...result._doc, token });
+            res.send({ ...result._doc, token, role: 'Admin' });
         }
     } catch (err) {
         res.status(500).json(err);
@@ -65,7 +65,7 @@ const adminLogIn = async (req, res) => {
                 // Generate JWT token
                 const token = generateToken(admin);
                 
-                res.send({ ...admin._doc, token });
+                res.send({ ...admin._doc, token, role: 'Admin' });
             } else {
                 res.send({ message: "Invalid password" });
             }

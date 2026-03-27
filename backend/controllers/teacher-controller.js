@@ -1,6 +1,16 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const Teacher = require('../models/teacherSchema.js');
 const Subject = require('../models/subjectSchema.js');
+
+// Generate JWT token
+const generateToken = (user) => {
+    return jwt.sign(
+        { id: user._id, role: 'Teacher', email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+    );
+};
 
 const teacherRegister = async (req, res) => {
     const { name, email, password, role, school, teachSubject, teachSclass } = req.body;
@@ -46,7 +56,11 @@ const teacherLogIn = async (req, res) => {
                 teacher = await teacher.populate("school", "schoolName")
                 teacher = await teacher.populate("teachSclass", "sclassName")
                 teacher.password = undefined;
-                res.send(teacher);
+                
+                // Generate JWT token
+                const token = generateToken(teacher);
+                
+                res.send({ ...teacher._doc, token, role: 'Teacher' });
             } else {
                 res.send({ message: "Invalid password" });
             }

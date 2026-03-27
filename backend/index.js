@@ -27,16 +27,31 @@ const corsOptions = {
         const allowedOrigins = [
             'http://localhost:3000',
             'http://localhost:3001',
-            process.env.FRONTEND_URL
+            process.env.FRONTEND_URL,
+            'https://studentmanagementsystem014.netlify.app',
+            /https:\/\/.*--studentmanagementsystem014\.netlify\.app$/, // Allow Netlify preview URLs
         ].filter(Boolean); // Remove undefined values
         
-        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+        // Check if origin matches any allowed origin (string or regex)
+        const isAllowed = allowedOrigins.some(allowedOrigin => {
+            if (typeof allowedOrigin === 'string') {
+                return origin === allowedOrigin;
+            }
+            if (allowedOrigin instanceof RegExp) {
+                return allowedOrigin.test(origin);
+            }
+            return false;
+        });
+        
+        if (isAllowed) {
             callback(null, true);
         } else {
-            callback(null, true); // Allow all origins in development
+            callback(null, true); // Allow all origins for now (change in production)
         }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 200
 };
 

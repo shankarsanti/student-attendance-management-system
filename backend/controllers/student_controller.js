@@ -1,6 +1,16 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const Student = require('../models/studentSchema.js');
 const Subject = require('../models/subjectSchema.js');
+
+// Generate JWT token
+const generateToken = (user) => {
+    return jwt.sign(
+        { id: user._id, role: 'Student', rollNum: user.rollNum },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+    );
+};
 
 const studentRegister = async (req, res) => {
     try {
@@ -44,7 +54,11 @@ const studentLogIn = async (req, res) => {
                 student.password = undefined;
                 student.examResult = undefined;
                 student.attendance = undefined;
-                res.send(student);
+                
+                // Generate JWT token
+                const token = generateToken(student);
+                
+                res.send({ ...student._doc, token, role: 'Student' });
             } else {
                 res.send({ message: "Invalid password" });
             }
