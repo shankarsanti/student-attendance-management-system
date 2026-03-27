@@ -1,0 +1,12 @@
+[build]
+  base = "frontend"
+  command = "CI=false npm run build"
+  publish = "frontend/build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  REACT_APP_BASE_URL = "https://student-attendance-management-syste-nu.vercel.app"
