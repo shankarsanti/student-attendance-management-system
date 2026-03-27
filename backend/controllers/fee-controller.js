@@ -1,63 +1,100 @@
-const FeeStructure = require('../models/feeStructureSchema.js');
-const FeePayment = require('../models/feePaymentSchema.js');
-const Student = require('../models/studentSchema.js');
+const { getFirestore } = require('../config/firebase');
+const COLLECTIONS = require('../models/firebase/collections');
+const { 
+    createDocument, 
+    getDocumentById, 
+    queryDocuments, 
+    updateDocument,
+    deleteDocument
+} = require('../models/firebase/helpers');
 
 // Fee Structure Controllers
 const createFeeStructure = async (req, res) => {
     try {
-        const feeStructure = new FeeStructure(req.body);
-        const result = await feeStructure.save();
-        res.send(result);
+        const feeStructure = await createDocument(COLLECTIONS.FEE_STRUCTURES, req.body);
+        res.send(feeStructure);
     } catch (err) {
+        console.error('Create fee structure error:', err);
         res.status(500).json(err);
     }
 };
 
 const getFeeStructures = async (req, res) => {
     try {
-        let feeStructures = await FeeStructure.find({ school: req.params.id })
-            .populate('class', 'sclassName')
-            .sort({ createdAt: -1 });
+        let feeStructures = await queryDocuments(COLLECTIONS.FEE_STRUCTURES, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
+        
         if (feeStructures.length > 0) {
+            // Populate class details
+            for (let fee of feeStructures) {
+                if (fee.sclass) {
+                    fee.sclass = await getDocumentById(COLLECTIONS.CLASSES, fee.sclass);
+                }
+            }
             res.send(feeStructures);
         } else {
             res.send({ message: "No fee structures found" });
         }
     } catch (err) {
+        console.error('Get fee structures error:', err);
         res.status(500).json(err);
     }
 };
 
 const getFeeStructure = async (req, res) => {
     try {
-        let feeStructure = await FeeStructure.findById(req.params.id)
-            .populate('class', 'sclassName');
+        let feeStructure = await getDocumentById(COLLECTIONS.FEE_STRUCTURES, req.params.id);
+        
         if (feeStructure) {
+            // Populate class details
+            if (feeStructure.sclass) {
+                feeStructure.sclass = await getDocumentById(COLLECTIONS.CLASSES, feeStructure.sclass);
+            }
             res.send(feeStructure);
         } else {
-            res.send({ message: "Fee structure not found" });
+            res.send({ message: "No fee structure found" });
         }
     } catch (err) {
+        console.error('Get fee structure error:', err);
+        res.status(500).json(err);
+    }
+};
+
+const getFeeStructureByClass = async (req, res) => {
+    try {
+        let feeStructures = await queryDocuments(COLLECTIONS.FEE_STRUCTURES, [
+            { field: 'sclass', operator: '==', value: req.params.id }
+        ]);
+        
+        if (feeStructures.length > 0) {
+            res.send(feeStructures[0]);
+        } else {
+            res.send({ message: "No fee structure found for this class" });
+        }
+    } catch (err) {
+        console.error('Get fee structure by class error:', err);
         res.status(500).json(err);
     }
 };
 
 const updateFeeStructure = async (req, res) => {
     try {
-        const result = await FeeStructure.findByIdAndUpdate(req.params.id,
-            { $set: req.body },
-            { new: true });
+        await updateDocument(COLLECTIONS.FEE_STRUCTURES, req.params.id, req.body);
+        let result = await getDocumentById(COLLECTIONS.FEE_STRUCTURES, req.params.id);
         res.send(result);
     } catch (error) {
+        console.error('Update fee structure error:', error);
         res.status(500).json(error);
     }
 };
 
 const deleteFeeStructure = async (req, res) => {
     try {
-        const result = await FeeStructure.findByIdAndDelete(req.params.id);
-        res.send(result);
+        await deleteDocument(COLLECTIONS.FEE_STRUCTURES, req.params.id);
+        res.send({ message: 'Fee structure deleted successfully' });
     } catch (error) {
+        console.error('Delete fee structure error:', error);
         res.status(500).json(error);
     }
 };
@@ -65,203 +102,150 @@ const deleteFeeStructure = async (req, res) => {
 // Fee Payment Controllers
 const recordPayment = async (req, res) => {
     try {
-        console.log('Recording payment with data:', req.body);
-        
-        // Validate required fields
-        if (!req.body.student) {
-            console.error('Missing student ID');
-            return res.status(400).json({ message: 'Student ID is required' });
-        }
-        if (!req.body.feeStructure) {
-            console.error('Missing fee structure ID');
-            return res.status(400).json({ message: 'Fee structure ID is required' });
-        }
-        if (!req.body.amountPaid || req.body.amountPaid <= 0) {
-            console.error('Invalid amount:', req.body.amountPaid);
-            return res.status(400).json({ message: 'Valid payment amount is required' });
-        }
-        
-        const payment = new FeePayment(req.body);
-        console.log('Created payment object:', payment);
-        
-        const result = await payment.save();
-        console.log('Payment saved successfully:', result._id);
-        
-        res.send(result);
+        const payment = await createDocument(COLLECTIONS.FEE_PAYMENTS, req.body);
+        res.send(payment);
     } catch (err) {
-        console.error('Error recording payment:', err);
-        console.error('Error details:', err.message);
-        res.status(500).json({ 
-            message: 'Error recording payment', 
-            error: err.message 
-        });
+        console.error('Record payment error:', err);
+        res.status(500).json(err);
     }
 };
 
 const getPaymentHistory = async (req, res) => {
     try {
-        let payments = await FeePayment.find({ school: req.params.id })
-            .populate('student', 'name rollNum')
-            .populate('feeStructure', 'feeName feeType amount')
-            .sort({ paymentDate: -1 });
+        let payments = await queryDocuments(COLLECTIONS.FEE_PAYMENTS, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
+        
         if (payments.length > 0) {
+            // Populate student details
+            for (let payment of payments) {
+                if (payment.student) {
+                    payment.student = await getDocumentById(COLLECTIONS.STUDENTS, payment.student);
+                }
+            }
             res.send(payments);
         } else {
-            res.send({ message: "No payment records found" });
+            res.send({ message: "No payments found" });
         }
     } catch (err) {
+        console.error('Get payment history error:', err);
         res.status(500).json(err);
     }
 };
 
 const getStudentPayments = async (req, res) => {
     try {
-        let payments = await FeePayment.find({ student: req.params.id })
-            .populate('feeStructure', 'feeName feeType amount')
-            .sort({ paymentDate: -1 });
+        let payments = await queryDocuments(COLLECTIONS.FEE_PAYMENTS, [
+            { field: 'student', operator: '==', value: req.params.id }
+        ]);
+        
         if (payments.length > 0) {
             res.send(payments);
         } else {
-            res.send({ message: "No payment records found" });
+            res.send({ message: "No payments found for this student" });
         }
     } catch (err) {
+        console.error('Get student payments error:', err);
         res.status(500).json(err);
     }
 };
 
 const getStudentFeeStatus = async (req, res) => {
     try {
-        console.log('Fetching fee status for student:', req.params.id);
-        
-        const student = await Student.findById(req.params.id).populate('sclassName');
+        const student = await getDocumentById(COLLECTIONS.STUDENTS, req.params.id);
         
         if (!student) {
-            console.log('Student not found');
-            return res.status(404).json({ message: "Student not found" });
+            return res.send({ message: "Student not found" });
         }
 
-        console.log('Student found:', {
-            name: student.name,
-            class: student.sclassName?.sclassName,
-            classId: student.sclassName?._id,
-            school: student.school
-        });
-
-        // Get all fee structures for student's class
-        const feeStructures = await FeeStructure.find({
-            $or: [
-                { class: student.sclassName?._id },
-                { class: null }
-            ],
-            school: student.school
-        }).populate('class', 'sclassName');
-
-        console.log('Fee structures found:', feeStructures.length);
-        feeStructures.forEach(fee => {
-            console.log('Fee:', {
-                name: fee.feeName,
-                amount: fee.amount,
-                class: fee.class?.sclassName || 'All Classes'
-            });
-        });
+        // Get fee structure for student's class
+        const feeStructures = await queryDocuments(COLLECTIONS.FEE_STRUCTURES, [
+            { field: 'sclass', operator: '==', value: student.sclassName }
+        ]);
 
         if (feeStructures.length === 0) {
-            console.log('No fee structures found for student');
-            return res.send({ message: "No fee structure found for this student" });
+            return res.send({ message: "No fee structure found for this class" });
         }
 
-        // Get all payments made by student
-        const payments = await FeePayment.find({ student: req.params.id });
-        console.log('Payments found:', payments.length);
+        const feeStructure = feeStructures[0];
 
-        // Calculate fee status
-        const feeStatus = feeStructures.map(fee => {
-            const paidAmount = payments
-                .filter(p => p.feeStructure.toString() === fee._id.toString())
-                .reduce((sum, p) => sum + p.amountPaid, 0);
-            
-            return {
-                feeStructure: fee,
-                totalAmount: fee.amount,
-                paidAmount: paidAmount,
-                pendingAmount: fee.amount - paidAmount,
-                status: paidAmount >= fee.amount ? 'Paid' : paidAmount > 0 ? 'Partial' : 'Pending'
-            };
+        // Get all payments by this student
+        const payments = await queryDocuments(COLLECTIONS.FEE_PAYMENTS, [
+            { field: 'student', operator: '==', value: req.params.id }
+        ]);
+
+        const totalPaid = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+        const totalFee = feeStructure.totalAmount || 0;
+        const balance = totalFee - totalPaid;
+
+        res.send({
+            student,
+            feeStructure,
+            payments,
+            totalPaid,
+            totalFee,
+            balance,
+            status: balance <= 0 ? 'Paid' : 'Pending'
         });
-
-        console.log('Returning fee status:', feeStatus.length, 'items');
-        res.send(feeStatus);
     } catch (err) {
-        console.error('Error in getStudentFeeStatus:', err);
+        console.error('Get student fee status error:', err);
         res.status(500).json(err);
     }
 };
 
 const deletePayment = async (req, res) => {
     try {
-        const result = await FeePayment.findByIdAndDelete(req.params.id);
-        res.send(result);
+        await deleteDocument(COLLECTIONS.FEE_PAYMENTS, req.params.id);
+        res.send({ message: 'Payment deleted successfully' });
     } catch (error) {
+        console.error('Delete payment error:', error);
         res.status(500).json(error);
     }
 };
 
-// Fee Defaulters (for reminders)
 const getFeeDefaulters = async (req, res) => {
     try {
-        const students = await Student.find({ school: req.params.id })
-            .populate('sclassName', 'sclassName');
+        const schoolId = req.params.id;
+
+        // Get all students in the school
+        const students = await queryDocuments(COLLECTIONS.STUDENTS, [
+            { field: 'school', operator: '==', value: schoolId }
+        ]);
 
         const defaulters = [];
 
-        for (let student of students) {
-            const feeStructures = await FeeStructure.find({
-                $or: [
-                    { class: student.sclassName._id },
-                    { class: null }
-                ],
-                school: student.school
-            });
+        for (const student of students) {
+            // Get fee structure for student's class
+            const feeStructures = await queryDocuments(COLLECTIONS.FEE_STRUCTURES, [
+                { field: 'sclass', operator: '==', value: student.sclassName }
+            ]);
 
-            const payments = await FeePayment.find({ student: student._id });
+            if (feeStructures.length === 0) continue;
 
-            let totalDue = 0;
-            let pendingFees = [];
+            const feeStructure = feeStructures[0];
 
-            feeStructures.forEach(fee => {
-                const paidAmount = payments
-                    .filter(p => p.feeStructure.toString() === fee._id.toString())
-                    .reduce((sum, p) => sum + p.amountPaid, 0);
-                
-                const pending = fee.amount - paidAmount;
-                if (pending > 0) {
-                    totalDue += pending;
-                    pendingFees.push({
-                        feeName: fee.feeName,
-                        feeType: fee.feeType,
-                        amount: fee.amount,
-                        paid: paidAmount,
-                        pending: pending
-                    });
-                }
-            });
+            // Get payments by this student
+            const payments = await queryDocuments(COLLECTIONS.FEE_PAYMENTS, [
+                { field: 'student', operator: '==', value: student.id }
+            ]);
 
-            if (totalDue > 0) {
+            const totalPaid = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+            const totalFee = feeStructure.totalAmount || 0;
+            const balance = totalFee - totalPaid;
+
+            if (balance > 0) {
                 defaulters.push({
-                    student: {
-                        _id: student._id,
-                        name: student.name,
-                        rollNum: student.rollNum,
-                        class: student.sclassName.sclassName
-                    },
-                    totalDue: totalDue,
-                    pendingFees: pendingFees
+                    student,
+                    totalFee,
+                    totalPaid,
+                    balance
                 });
             }
         }
 
         res.send(defaulters);
     } catch (err) {
+        console.error('Get fee defaulters error:', err);
         res.status(500).json(err);
     }
 };
@@ -270,6 +254,7 @@ module.exports = {
     createFeeStructure,
     getFeeStructures,
     getFeeStructure,
+    getFeeStructureByClass,
     updateFeeStructure,
     deleteFeeStructure,
     recordPayment,

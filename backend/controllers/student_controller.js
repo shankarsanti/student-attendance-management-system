@@ -1,64 +1,66 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const Student = require('../models/studentSchema.js');
-const Subject = require('../models/subjectSchema.js');
-
-// Generate JWT token
-const generateToken = (user) => {
-    return jwt.sign(
-        { id: user._id, role: 'Student', rollNum: user.rollNum },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-    );
-};
+const { getFirestore } = require('../config/firebase');
+const COLLECTIONS = require('../models/firebase/collections');
+const { 
+    createDocument, 
+    getDocumentById, 
+    queryDocuments, 
+    updateDocument,
+    deleteDocument,
+    getAllDocuments,
+    arrayUnion,
+    arrayRemove
+} = require('../models/firebase/helpers');
 
 const studentRegister = async (req, res) => {
     try {
         const salt = await bcrypt.genSalt(10);
         const hashedPass = await bcrypt.hash(req.body.password, salt);
 
-        const existingStudent = await Student.findOne({
-            rollNum: req.body.rollNum,
-            school: req.body.adminID,
-            sclassName: req.body.sclassName,
-        });
+        const studentData = {
+            ...req.body,
+            password: hashedPass,
+            role: 'Student',
+            examResult: [],
+            attendance: []
+        };
 
-        if (existingStudent) {
+        // Check if student already exists
+        const existingStudent = await queryDocuments(COLLECTIONS.STUDENTS, [
+            { field: 'rollNum', operator: '==', value: req.body.rollNum },
+            { field: 'school', operator: '==', value: req.body.school }
+        ]);
+
+        if (existingStudent.length > 0) {
             res.send({ message: 'Roll Number already exists' });
-        }
-        else {
-            const student = new Student({
-                ...req.body,
-                school: req.body.adminID,
-                password: hashedPass
-            });
-
-            let result = await student.save();
-
-            result.password = undefined;
+        } else {
+            let result = await createDocument(COLLECTIONS.STUDENTS, studentData);
+            delete result.password;
             res.send(result);
         }
     } catch (err) {
+        console.error('Student registration error:', err);
         res.status(500).json(err);
     }
 };
 
 const studentLogIn = async (req, res) => {
     try {
-        let student = await Student.findOne({ rollNum: req.body.rollNum, name: req.body.studentName });
-        if (student) {
+        const students = await queryDocuments(COLLECTIONS.STUDENTS, [
+            { field: 'rollNum', operator: '==', value: req.body.rollNum },
+            { field: 'name', operator: '==', value: req.body.studentName }
+        ]);
+
+        if (students.length > 0) {
+            const student = students[0];
             const validated = await bcrypt.compare(req.body.password, student.password);
+            
             if (validated) {
-                student = await student.populate("school", "schoolName")
-                student = await student.populate("sclassName", "sclassName")
-                student.password = undefined;
-                student.examResult = undefined;
-                student.attendance = undefined;
+                // Get class details
+                const sclass = await getDocumentById(COLLECTIONS.CLASSES, student.sclassName);
                 
-                // Generate JWT token
-                const token = generateToken(student);
-                
-                res.send({ ...student._doc, token, role: 'Student' });
+                delete student.password;
+                res.send({ ...student, sclassName: sclass });
             } else {
                 res.send({ message: "Invalid password" });
             }
@@ -66,120 +68,168 @@ const studentLogIn = async (req, res) => {
             res.send({ message: "Student not found" });
         }
     } catch (err) {
+        console.error('Student login error:', err);
         res.status(500).json(err);
     }
 };
 
 const getStudents = async (req, res) => {
     try {
-        let students = await Student.find({ school: req.params.id }).populate("sclassName", "sclassName");
+        let students = await queryDocuments(COLLECTIONS.STUDENTS, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
+        
         if (students.length > 0) {
-            let modifiedStudents = students.map((student) => {
-                return { ...student._doc, password: undefined };
-            });
-            res.send(modifiedStudents);
+            // Populate class details
+            for (let student of students) {
+                if (student.sclassName) {
+                    const sclass = await getDocumentById(COLLECTIONS.CLASSES, student.sclassName);
+                    student.sclassName = sclass;
+                }
+            }
+            res.send(students);
         } else {
             res.send({ message: "No students found" });
         }
     } catch (err) {
+        console.error('Get students error:', err);
         res.status(500).json(err);
     }
 };
 
 const getStudentDetail = async (req, res) => {
     try {
-        let student = await Student.findById(req.params.id)
-            .populate("school", "schoolName")
-            .populate("sclassName", "sclassName")
-            .populate("examResult.subName", "subName")
-            .populate("attendance.subName", "subName sessions");
+        let student = await getDocumentById(COLLECTIONS.STUDENTS, req.params.id);
+        
         if (student) {
-            student.password = undefined;
+            // Populate class details
+            if (student.sclassName) {
+                student.sclassName = await getDocumentById(COLLECTIONS.CLASSES, student.sclassName);
+            }
+            
+            // Populate exam results with subject details
+            if (student.examResult && student.examResult.length > 0) {
+                for (let result of student.examResult) {
+                    if (result.subName) {
+                        result.subName = await getDocumentById(COLLECTIONS.SUBJECTS, result.subName);
+                    }
+                }
+            }
+            
+            // Populate attendance with subject details
+            if (student.attendance && student.attendance.length > 0) {
+                for (let att of student.attendance) {
+                    if (att.subName) {
+                        att.subName = await getDocumentById(COLLECTIONS.SUBJECTS, att.subName);
+                    }
+                }
+            }
+            
+            delete student.password;
             res.send(student);
-        }
-        else {
+        } else {
             res.send({ message: "No student found" });
         }
     } catch (err) {
+        console.error('Get student detail error:', err);
         res.status(500).json(err);
     }
-}
+};
 
 const deleteStudent = async (req, res) => {
     try {
-        const result = await Student.findByIdAndDelete(req.params.id)
-        res.send(result)
+        await deleteDocument(COLLECTIONS.STUDENTS, req.params.id);
+        res.send({ message: 'Student deleted successfully' });
     } catch (error) {
-        res.status(500).json(err);
+        console.error('Delete student error:', error);
+        res.status(500).json(error);
     }
-}
+};
 
 const deleteStudents = async (req, res) => {
     try {
-        const result = await Student.deleteMany({ school: req.params.id })
-        if (result.deletedCount === 0) {
-            res.send({ message: "No students found to delete" })
-        } else {
-            res.send(result)
+        const students = await queryDocuments(COLLECTIONS.STUDENTS, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
+        
+        for (const student of students) {
+            await deleteDocument(COLLECTIONS.STUDENTS, student.id);
         }
+        
+        res.send({ message: 'All students deleted successfully' });
     } catch (error) {
-        res.status(500).json(err);
+        console.error('Delete students error:', error);
+        res.status(500).json(error);
     }
-}
+};
 
 const deleteStudentsByClass = async (req, res) => {
     try {
-        const result = await Student.deleteMany({ sclassName: req.params.id })
-        if (result.deletedCount === 0) {
-            res.send({ message: "No students found to delete" })
-        } else {
-            res.send(result)
+        const students = await queryDocuments(COLLECTIONS.STUDENTS, [
+            { field: 'sclassName', operator: '==', value: req.params.id }
+        ]);
+        
+        for (const student of students) {
+            await deleteDocument(COLLECTIONS.STUDENTS, student.id);
         }
+        
+        res.send({ message: 'Class students deleted successfully' });
     } catch (error) {
-        res.status(500).json(err);
+        console.error('Delete students by class error:', error);
+        res.status(500).json(error);
     }
-}
+};
 
 const updateStudent = async (req, res) => {
     try {
         if (req.body.password) {
-            const salt = await bcrypt.genSalt(10)
-            req.body.password = await bcrypt.hash(req.body.password, salt)
+            const salt = await bcrypt.genSalt(10);
+            req.body.password = await bcrypt.hash(req.body.password, salt);
         }
-        let result = await Student.findByIdAndUpdate(req.params.id,
-            { $set: req.body },
-            { new: true })
-
-        result.password = undefined;
-        res.send(result)
+        
+        await updateDocument(COLLECTIONS.STUDENTS, req.params.id, req.body);
+        let result = await getDocumentById(COLLECTIONS.STUDENTS, req.params.id);
+        
+        delete result.password;
+        res.send(result);
     } catch (error) {
+        console.error('Update student error:', error);
         res.status(500).json(error);
     }
-}
+};
 
 const updateExamResult = async (req, res) => {
     const { subName, marksObtained } = req.body;
 
     try {
-        const student = await Student.findById(req.params.id);
-
+        const student = await getDocumentById(COLLECTIONS.STUDENTS, req.params.id);
+        
         if (!student) {
             return res.send({ message: 'Student not found' });
         }
 
-        const existingResult = student.examResult.find(
-            (result) => result.subName.toString() === subName
+        const existingResult = student.examResult?.find(
+            (result) => result.subName === subName
         );
 
         if (existingResult) {
             existingResult.marksObtained = marksObtained;
         } else {
+            if (!student.examResult) {
+                student.examResult = [];
+            }
             student.examResult.push({ subName, marksObtained });
         }
 
-        const result = await student.save();
-        return res.send(result);
+        await updateDocument(COLLECTIONS.STUDENTS, req.params.id, {
+            examResult: student.examResult
+        });
+
+        const result = await getDocumentById(COLLECTIONS.STUDENTS, req.params.id);
+        delete result.password;
+        res.send(result);
     } catch (error) {
+        console.error('Update exam result error:', error);
         res.status(500).json(error);
     }
 };
@@ -188,38 +238,34 @@ const studentAttendance = async (req, res) => {
     const { subName, status, date } = req.body;
 
     try {
-        const student = await Student.findById(req.params.id);
+        const student = await getDocumentById(COLLECTIONS.STUDENTS, req.params.id);
 
         if (!student) {
             return res.send({ message: 'Student not found' });
         }
 
-        const subject = await Subject.findById(subName);
-
-        const existingAttendance = student.attendance.find(
-            (a) =>
-                a.date.toDateString() === new Date(date).toDateString() &&
-                a.subName.toString() === subName
+        const existingAttendance = student.attendance?.find(
+            (a) => a.date === date && a.subName === subName
         );
 
         if (existingAttendance) {
             existingAttendance.status = status;
         } else {
-            // Check if the student has already attended the maximum number of sessions
-            const attendedSessions = student.attendance.filter(
-                (a) => a.subName.toString() === subName
-            ).length;
-
-            if (attendedSessions >= subject.sessions) {
-                return res.send({ message: 'Maximum attendance limit reached' });
+            if (!student.attendance) {
+                student.attendance = [];
             }
-
             student.attendance.push({ date, status, subName });
         }
 
-        const result = await student.save();
-        return res.send(result);
+        await updateDocument(COLLECTIONS.STUDENTS, req.params.id, {
+            attendance: student.attendance
+        });
+
+        const result = await getDocumentById(COLLECTIONS.STUDENTS, req.params.id);
+        delete result.password;
+        res.send(result);
     } catch (error) {
+        console.error('Student attendance error:', error);
         res.status(500).json(error);
     }
 };
@@ -228,76 +274,103 @@ const clearAllStudentsAttendanceBySubject = async (req, res) => {
     const subName = req.params.id;
 
     try {
-        const result = await Student.updateMany(
-            { 'attendance.subName': subName },
-            { $pull: { attendance: { subName } } }
-        );
-        return res.send(result);
+        const students = await getAllDocuments(COLLECTIONS.STUDENTS);
+
+        for (const student of students) {
+            if (student.attendance) {
+                student.attendance = student.attendance.filter(
+                    (a) => a.subName !== subName
+                );
+                await updateDocument(COLLECTIONS.STUDENTS, student.id, {
+                    attendance: student.attendance
+                });
+            }
+        }
+
+        res.send({ message: 'Attendance cleared for all students in subject' });
     } catch (error) {
+        console.error('Clear attendance by subject error:', error);
         res.status(500).json(error);
     }
 };
 
 const clearAllStudentsAttendance = async (req, res) => {
-    const schoolId = req.params.id
+    const schoolId = req.params.id;
 
     try {
-        const result = await Student.updateMany(
-            { school: schoolId },
-            { $set: { attendance: [] } }
-        );
+        const students = await queryDocuments(COLLECTIONS.STUDENTS, [
+            { field: 'school', operator: '==', value: schoolId }
+        ]);
 
-        return res.send(result);
+        for (const student of students) {
+            await updateDocument(COLLECTIONS.STUDENTS, student.id, {
+                attendance: []
+            });
+        }
+
+        res.send({ message: 'Attendance cleared for all students' });
     } catch (error) {
+        console.error('Clear all attendance error:', error);
         res.status(500).json(error);
     }
 };
 
 const removeStudentAttendanceBySubject = async (req, res) => {
     const studentId = req.params.id;
-    const subName = req.body.subId
+    const subName = req.body.subId;
 
     try {
-        const result = await Student.updateOne(
-            { _id: studentId },
-            { $pull: { attendance: { subName: subName } } }
-        );
+        const student = await getDocumentById(COLLECTIONS.STUDENTS, studentId);
 
-        return res.send(result);
+        if (!student) {
+            return res.send({ message: 'Student not found' });
+        }
+
+        student.attendance = student.attendance?.filter(
+            (a) => a.subName !== subName
+        ) || [];
+
+        await updateDocument(COLLECTIONS.STUDENTS, studentId, {
+            attendance: student.attendance
+        });
+
+        const result = await getDocumentById(COLLECTIONS.STUDENTS, studentId);
+        delete result.password;
+        res.send(result);
     } catch (error) {
+        console.error('Remove student attendance by subject error:', error);
         res.status(500).json(error);
     }
 };
-
 
 const removeStudentAttendance = async (req, res) => {
     const studentId = req.params.id;
 
     try {
-        const result = await Student.updateOne(
-            { _id: studentId },
-            { $set: { attendance: [] } }
-        );
+        await updateDocument(COLLECTIONS.STUDENTS, studentId, {
+            attendance: []
+        });
 
-        return res.send(result);
+        const result = await getDocumentById(COLLECTIONS.STUDENTS, studentId);
+        delete result.password;
+        res.send(result);
     } catch (error) {
+        console.error('Remove student attendance error:', error);
         res.status(500).json(error);
     }
 };
-
 
 module.exports = {
     studentRegister,
     studentLogIn,
     getStudents,
     getStudentDetail,
-    deleteStudents,
     deleteStudent,
-    updateStudent,
-    studentAttendance,
+    deleteStudents,
     deleteStudentsByClass,
+    updateStudent,
     updateExamResult,
-
+    studentAttendance,
     clearAllStudentsAttendanceBySubject,
     clearAllStudentsAttendance,
     removeStudentAttendanceBySubject,

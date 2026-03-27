@@ -1,42 +1,114 @@
-const Test = require('../models/testSchema');
-const Student = require('../models/studentSchema');
+const { getFirestore } = require('../config/firebase');
+const COLLECTIONS = require('../models/firebase/collections');
+const { 
+    createDocument, 
+    getDocumentById, 
+    queryDocuments, 
+    updateDocument,
+    deleteDocument
+} = require('../models/firebase/helpers');
 
-// Create a new test
 const createTest = async (req, res) => {
     try {
-        const test = new Test(req.body);
-        const result = await test.save();
-        res.send(result);
+        const test = await createDocument(COLLECTIONS.TESTS, req.body);
+        res.send(test);
     } catch (err) {
+        console.error('Test create error:', err);
         res.status(500).json(err);
     }
 };
 
-// Get all tests for a teacher
 const getTestsByTeacher = async (req, res) => {
     try {
-        const tests = await Test.find({ teacher: req.params.id })
-            .populate('subject', 'subName')
-            .populate('sclass', 'sclassName')
-            .sort({ date: -1 });
+        // Get teacher's subject
+        const teacher = await getDocumentById(COLLECTIONS.TEACHERS, req.params.id);
+        
+        if (!teacher || !teacher.teachSubject) {
+            return res.send({ message: "No subject assigned to teacher" });
+        }
+
+        let tests = await queryDocuments(COLLECTIONS.TESTS, [
+            { field: 'subject', operator: '==', value: teacher.teachSubject }
+        ]);
         
         if (tests.length > 0) {
+            // Populate subject and class details
+            for (let test of tests) {
+                if (test.subject) {
+                    test.subject = await getDocumentById(COLLECTIONS.SUBJECTS, test.subject);
+                }
+                if (test.sclass) {
+                    test.sclass = await getDocumentById(COLLECTIONS.CLASSES, test.sclass);
+                }
+            }
             res.send(tests);
         } else {
             res.send({ message: "No tests found" });
         }
     } catch (err) {
+        console.error('Get tests by teacher error:', err);
         res.status(500).json(err);
     }
 };
 
-// Get all tests for a class
 const getTestsByClass = async (req, res) => {
     try {
-        const tests = await Test.find({ sclass: req.params.id })
-            .populate('subject', 'subName')
-            .populate('teacher', 'name')
-            .sort({ date: -1 });
+        let tests = await queryDocuments(COLLECTIONS.TESTS, [
+            { field: 'sclass', operator: '==', value: req.params.id }
+        ]);
+        
+        if (tests.length > 0) {
+            // Populate subject details
+            for (let test of tests) {
+                if (test.subject) {
+                    test.subject = await getDocumentById(COLLECTIONS.SUBJECTS, test.subject);
+                }
+            }
+            res.send(tests);
+        } else {
+            res.send({ message: "No tests found" });
+        }
+    } catch (err) {
+        console.error('Get tests by class error:', err);
+        res.status(500).json(err);
+    }
+};
+
+const getTestsByStudent = async (req, res) => {
+    try {
+        // Get student's class
+        const student = await getDocumentById(COLLECTIONS.STUDENTS, req.params.id);
+        
+        if (!student || !student.sclassName) {
+            return res.send({ message: "Student not found or no class assigned" });
+        }
+
+        let tests = await queryDocuments(COLLECTIONS.TESTS, [
+            { field: 'sclass', operator: '==', value: student.sclassName }
+        ]);
+        
+        if (tests.length > 0) {
+            // Populate subject details
+            for (let test of tests) {
+                if (test.subject) {
+                    test.subject = await getDocumentById(COLLECTIONS.SUBJECTS, test.subject);
+                }
+            }
+            res.send(tests);
+        } else {
+            res.send({ message: "No tests found" });
+        }
+    } catch (err) {
+        console.error('Get tests by student error:', err);
+        res.status(500).json(err);
+    }
+};
+
+const getTestsBySubject = async (req, res) => {
+    try {
+        let tests = await queryDocuments(COLLECTIONS.TESTS, [
+            { field: 'subject', operator: '==', value: req.params.id }
+        ]);
         
         if (tests.length > 0) {
             res.send(tests);
@@ -44,124 +116,136 @@ const getTestsByClass = async (req, res) => {
             res.send({ message: "No tests found" });
         }
     } catch (err) {
+        console.error('Get tests by subject error:', err);
         res.status(500).json(err);
     }
 };
 
-// Get test details
 const getTestDetail = async (req, res) => {
     try {
-        const test = await Test.findById(req.params.id)
-            .populate('subject', 'subName')
-            .populate('sclass', 'sclassName')
-            .populate('teacher', 'name')
-            .populate('results.student', 'name rollNum');
+        let test = await getDocumentById(COLLECTIONS.TESTS, req.params.id);
         
         if (test) {
+            // Populate subject and class details
+            if (test.subject) {
+                test.subject = await getDocumentById(COLLECTIONS.SUBJECTS, test.subject);
+            }
+            if (test.sclass) {
+                test.sclass = await getDocumentById(COLLECTIONS.CLASSES, test.sclass);
+            }
             res.send(test);
         } else {
-            res.send({ message: "Test not found" });
+            res.send({ message: "No test found" });
         }
     } catch (err) {
+        console.error('Get test detail error:', err);
         res.status(500).json(err);
     }
 };
 
-// Update test
 const updateTest = async (req, res) => {
     try {
-        const result = await Test.findByIdAndUpdate(
-            req.params.id,
-            { $set: req.body },
-            { new: true }
-        );
+        await updateDocument(COLLECTIONS.TESTS, req.params.id, req.body);
+        let result = await getDocumentById(COLLECTIONS.TESTS, req.params.id);
         res.send(result);
-    } catch (err) {
-        res.status(500).json(err);
+    } catch (error) {
+        console.error('Update test error:', error);
+        res.status(500).json(error);
     }
 };
 
-// Delete test
-const deleteTest = async (req, res) => {
-    try {
-        const result = await Test.findByIdAndDelete(req.params.id);
-        res.send(result);
-    } catch (err) {
-        res.status(500).json(err);
-    }
-};
-
-// Add or update test result for a student
 const updateTestResult = async (req, res) => {
-    const { testId, studentId, marksObtained, remarks } = req.body;
-    
+    const { testId, studentId, marks } = req.body;
+
     try {
-        const test = await Test.findById(testId);
+        const test = await getDocumentById(COLLECTIONS.TESTS, testId);
         
         if (!test) {
             return res.send({ message: 'Test not found' });
         }
 
-        const existingResult = test.results.find(
-            r => r.student.toString() === studentId
-        );
+        if (!test.results) {
+            test.results = [];
+        }
+
+        const existingResult = test.results.find(r => r.studentId === studentId);
 
         if (existingResult) {
-            existingResult.marksObtained = marksObtained;
-            existingResult.remarks = remarks || existingResult.remarks;
+            existingResult.marks = marks;
         } else {
-            test.results.push({ student: studentId, marksObtained, remarks });
+            test.results.push({ studentId, marks });
         }
 
-        await test.save();
-        
-        // Also update student's exam result
-        const student = await Student.findById(studentId);
-        if (student) {
-            const existingExamResult = student.examResult.find(
-                er => er.subName.toString() === test.subject.toString()
-            );
-            
-            if (existingExamResult) {
-                existingExamResult.marksObtained += marksObtained;
-            } else {
-                student.examResult.push({
-                    subName: test.subject,
-                    marksObtained: marksObtained
-                });
-            }
-            await student.save();
-        }
+        await updateDocument(COLLECTIONS.TESTS, testId, {
+            results: test.results
+        });
 
-        const updatedTest = await Test.findById(testId)
-            .populate('results.student', 'name rollNum');
-        
-        res.send(updatedTest);
-    } catch (err) {
-        res.status(500).json(err);
+        const result = await getDocumentById(COLLECTIONS.TESTS, testId);
+        res.send(result);
+    } catch (error) {
+        console.error('Update test result error:', error);
+        res.status(500).json(error);
     }
 };
 
-// Get tests for a student
-const getTestsByStudent = async (req, res) => {
+const deleteTest = async (req, res) => {
     try {
-        const student = await Student.findById(req.params.id);
-        if (!student) {
-            return res.send({ message: "Student not found" });
-        }
+        await deleteDocument(COLLECTIONS.TESTS, req.params.id);
+        res.send({ message: 'Test deleted successfully' });
+    } catch (error) {
+        console.error('Delete test error:', error);
+        res.status(500).json(error);
+    }
+};
 
-        const tests = await Test.find({ sclass: student.sclassName })
-            .populate('subject', 'subName')
-            .populate('teacher', 'name')
-            .sort({ date: -1 });
+const deleteTests = async (req, res) => {
+    try {
+        const tests = await queryDocuments(COLLECTIONS.TESTS, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
         
-        if (tests.length > 0) {
-            res.send(tests);
-        } else {
-            res.send({ message: "No tests found" });
+        for (const test of tests) {
+            await deleteDocument(COLLECTIONS.TESTS, test.id);
         }
-    } catch (err) {
-        res.status(500).json(err);
+        
+        res.send({ message: 'All tests deleted successfully' });
+    } catch (error) {
+        console.error('Delete tests error:', error);
+        res.status(500).json(error);
+    }
+};
+
+const deleteTestsByClass = async (req, res) => {
+    try {
+        const tests = await queryDocuments(COLLECTIONS.TESTS, [
+            { field: 'sclass', operator: '==', value: req.params.id }
+        ]);
+        
+        for (const test of tests) {
+            await deleteDocument(COLLECTIONS.TESTS, test.id);
+        }
+        
+        res.send({ message: 'Class tests deleted successfully' });
+    } catch (error) {
+        console.error('Delete tests by class error:', error);
+        res.status(500).json(error);
+    }
+};
+
+const deleteTestsBySubject = async (req, res) => {
+    try {
+        const tests = await queryDocuments(COLLECTIONS.TESTS, [
+            { field: 'subject', operator: '==', value: req.params.id }
+        ]);
+        
+        for (const test of tests) {
+            await deleteDocument(COLLECTIONS.TESTS, test.id);
+        }
+        
+        res.send({ message: 'Subject tests deleted successfully' });
+    } catch (error) {
+        console.error('Delete tests by subject error:', error);
+        res.status(500).json(error);
     }
 };
 
@@ -169,9 +253,13 @@ module.exports = {
     createTest,
     getTestsByTeacher,
     getTestsByClass,
+    getTestsByStudent,
+    getTestsBySubject,
     getTestDetail,
     updateTest,
-    deleteTest,
     updateTestResult,
-    getTestsByStudent
+    deleteTest,
+    deleteTests,
+    deleteTestsByClass,
+    deleteTestsBySubject
 };

@@ -1,66 +1,71 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const Teacher = require('../models/teacherSchema.js');
-const Subject = require('../models/subjectSchema.js');
-
-// Generate JWT token
-const generateToken = (user) => {
-    return jwt.sign(
-        { id: user._id, role: 'Teacher', email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-    );
-};
+const { getFirestore } = require('../config/firebase');
+const COLLECTIONS = require('../models/firebase/collections');
+const { 
+    createDocument, 
+    getDocumentById, 
+    queryDocuments, 
+    updateDocument,
+    deleteDocument
+} = require('../models/firebase/helpers');
 
 const teacherRegister = async (req, res) => {
-    const { name, email, password, role, school, teachSubject, teachSclass } = req.body;
     try {
         const salt = await bcrypt.genSalt(10);
-        const hashedPass = await bcrypt.hash(password, salt);
+        const hashedPass = await bcrypt.hash(req.body.password, salt);
 
-        const teacher = new Teacher({ 
-            name, 
-            email, 
-            password: hashedPass, 
-            role, 
-            school, 
-            teachSubject, 
-            teachSclass,
-            teachSubjects: [] // Initialize empty array for multiple subjects
-        });
+        const teacherData = {
+            ...req.body,
+            password: hashedPass,
+            role: 'Teacher'
+        };
 
-        const existingTeacherByEmail = await Teacher.findOne({ email });
+        // Check if teacher email already exists
+        const existingTeacher = await queryDocuments(COLLECTIONS.TEACHERS, [
+            { field: 'email', operator: '==', value: req.body.email }
+        ]);
 
-        if (existingTeacherByEmail) {
+        if (existingTeacher.length > 0) {
             res.send({ message: 'Email already exists' });
-        }
-        else {
-            let result = await teacher.save();
-            await Subject.findByIdAndUpdate(teachSubject, { teacher: teacher._id });
-            result.password = undefined;
+        } else {
+            let result = await createDocument(COLLECTIONS.TEACHERS, teacherData);
+            delete result.password;
             res.send(result);
         }
     } catch (err) {
+        console.error('Teacher registration error:', err);
         res.status(500).json(err);
     }
 };
 
 const teacherLogIn = async (req, res) => {
     try {
-        let teacher = await Teacher.findOne({ email: req.body.email });
-        if (teacher) {
+        const teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+            { field: 'email', operator: '==', value: req.body.email }
+        ]);
+
+        if (teachers.length > 0) {
+            const teacher = teachers[0];
             const validated = await bcrypt.compare(req.body.password, teacher.password);
+            
             if (validated) {
-                teacher = await teacher.populate("teachSubject", "subName sessions")
-                teacher = await teacher.populate("teachSubjects.subject", "subName sessions")
-                teacher = await teacher.populate("school", "schoolName")
-                teacher = await teacher.populate("teachSclass", "sclassName")
-                teacher.password = undefined;
+                // Populate subject details
+                if (teacher.teachSubject) {
+                    teacher.teachSubject = await getDocumentById(COLLECTIONS.SUBJECTS, teacher.teachSubject);
+                    
+                    // Populate class details within subject
+                    if (teacher.teachSubject && teacher.teachSubject.sclassName) {
+                        teacher.teachSubject.sclassName = await getDocumentById(COLLECTIONS.CLASSES, teacher.teachSubject.sclassName);
+                    }
+                }
                 
-                // Generate JWT token
-                const token = generateToken(teacher);
+                // Populate school details
+                if (teacher.school) {
+                    teacher.school = await getDocumentById(COLLECTIONS.ADMINS, teacher.school);
+                }
                 
-                res.send({ ...teacher._doc, token, role: 'Teacher' });
+                delete teacher.password;
+                res.send(teacher);
             } else {
                 res.send({ message: "Invalid password" });
             }
@@ -68,232 +73,145 @@ const teacherLogIn = async (req, res) => {
             res.send({ message: "Teacher not found" });
         }
     } catch (err) {
+        console.error('Teacher login error:', err);
         res.status(500).json(err);
     }
 };
 
 const getTeachers = async (req, res) => {
     try {
-        let teachers = await Teacher.find({ school: req.params.id })
-            .populate("teachSubject", "subName")
-            .populate("teachSubjects.subject", "subName")
-            .populate("teachSclass", "sclassName");
+        let teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
+        
         if (teachers.length > 0) {
-            let modifiedTeachers = teachers.map((teacher) => {
-                return { ...teacher._doc, password: undefined };
-            });
-            res.send(modifiedTeachers);
+            // Populate subject details for each teacher
+            for (let teacher of teachers) {
+                if (teacher.teachSubject) {
+                    const subject = await getDocumentById(COLLECTIONS.SUBJECTS, teacher.teachSubject);
+                    teacher.teachSubject = subject;
+                    
+                    // Populate class details
+                    if (subject && subject.sclassName) {
+                        subject.sclassName = await getDocumentById(COLLECTIONS.CLASSES, subject.sclassName);
+                    }
+                }
+            }
+            res.send(teachers);
         } else {
             res.send({ message: "No teachers found" });
         }
     } catch (err) {
+        console.error('Get teachers error:', err);
         res.status(500).json(err);
     }
 };
 
 const getTeacherDetail = async (req, res) => {
     try {
-        let teacher = await Teacher.findById(req.params.id)
-            .populate("teachSubject", "subName sessions")
-            .populate("teachSubjects.subject", "subName sessions")
-            .populate("school", "schoolName")
-            .populate("teachSclass", "sclassName")
+        let teacher = await getDocumentById(COLLECTIONS.TEACHERS, req.params.id);
+        
         if (teacher) {
-            teacher.password = undefined;
+            // Populate subject details
+            if (teacher.teachSubject) {
+                teacher.teachSubject = await getDocumentById(COLLECTIONS.SUBJECTS, teacher.teachSubject);
+                
+                // Populate class details
+                if (teacher.teachSubject && teacher.teachSubject.sclassName) {
+                    teacher.teachSubject.sclassName = await getDocumentById(COLLECTIONS.CLASSES, teacher.teachSubject.sclassName);
+                }
+            }
+            
+            // Populate school details
+            if (teacher.school) {
+                teacher.school = await getDocumentById(COLLECTIONS.ADMINS, teacher.school);
+            }
+            
+            delete teacher.password;
             res.send(teacher);
-        }
-        else {
+        } else {
             res.send({ message: "No teacher found" });
         }
     } catch (err) {
+        console.error('Get teacher detail error:', err);
         res.status(500).json(err);
     }
-}
+};
 
 const updateTeacherSubject = async (req, res) => {
     const { teacherId, teachSubject } = req.body;
-    try {
-        const updatedTeacher = await Teacher.findByIdAndUpdate(
-            teacherId,
-            { teachSubject },
-            { new: true }
-        );
-
-        await Subject.findByIdAndUpdate(teachSubject, { teacher: updatedTeacher._id });
-
-        res.send(updatedTeacher);
-    } catch (error) {
-        res.status(500).json(error);
-    }
-};
-
-const addTeacherSubject = async (req, res) => {
-    const { teacherId, subjectId, semester } = req.body;
-    
-    console.log('=== Add Teacher Subject Request ===');
-    console.log('Teacher ID:', teacherId);
-    console.log('Subject ID:', subjectId);
-    console.log('Semester:', semester);
     
     try {
-        const teacher = await Teacher.findById(teacherId);
+        const updatedTeacher = await updateDocument(COLLECTIONS.TEACHERS, teacherId, {
+            teachSubject
+        });
         
-        if (!teacher) {
-            console.log('ERROR: Teacher not found');
-            return res.send({ message: 'Teacher not found' });
+        const result = await getDocumentById(COLLECTIONS.TEACHERS, teacherId);
+        
+        // Populate subject details
+        if (result.teachSubject) {
+            result.teachSubject = await getDocumentById(COLLECTIONS.SUBJECTS, result.teachSubject);
         }
-
-        console.log('Teacher found:', teacher.name);
-        console.log('Current teachSubjects:', teacher.teachSubjects);
-
-        // Check if subject already exists in the same semester
-        const existingSubject = teacher.teachSubjects.find(
-            ts => ts.subject.toString() === subjectId && ts.semester === semester
-        );
-
-        if (existingSubject) {
-            console.log('ERROR: Subject already assigned for this semester');
-            return res.send({ message: 'Subject already assigned for this semester' });
-        }
-
-        teacher.teachSubjects.push({ subject: subjectId, semester: semester });
-        await teacher.save();
         
-        console.log('Subject added successfully');
-        console.log('Updated teachSubjects:', teacher.teachSubjects);
-
-        // Update subject with teacher reference
-        await Subject.findByIdAndUpdate(subjectId, { teacher: teacherId });
-
-        // Return populated teacher
-        const updatedTeacher = await Teacher.findById(teacherId)
-            .populate('teachSubjects.subject', 'subName sessions');
-        
-        console.log('Returning updated teacher');
-        res.send(updatedTeacher);
+        delete result.password;
+        res.send(result);
     } catch (error) {
-        console.log('ERROR in addTeacherSubject:', error);
-        res.status(500).json(error);
-    }
-};
-
-const removeTeacherSubject = async (req, res) => {
-    const { teacherId, subjectId, semester } = req.body;
-    try {
-        const teacher = await Teacher.findById(teacherId);
-        
-        if (!teacher) {
-            return res.send({ message: 'Teacher not found' });
-        }
-
-        teacher.teachSubjects = teacher.teachSubjects.filter(
-            ts => !(ts.subject.toString() === subjectId && ts.semester === semester)
-        );
-        await teacher.save();
-
-        // Remove teacher reference from subject only if not teaching it in any semester
-        const stillTeaching = teacher.teachSubjects.some(
-            ts => ts.subject.toString() === subjectId
-        );
-        
-        if (!stillTeaching) {
-            await Subject.findByIdAndUpdate(subjectId, { $unset: { teacher: 1 } });
-        }
-
-        res.send(teacher);
-    } catch (error) {
+        console.error('Update teacher subject error:', error);
         res.status(500).json(error);
     }
 };
 
 const deleteTeacher = async (req, res) => {
     try {
-        const deletedTeacher = await Teacher.findByIdAndDelete(req.params.id);
-
-        await Subject.updateOne(
-            { teacher: deletedTeacher._id, teacher: { $exists: true } },
-            { $unset: { teacher: 1 } }
-        );
-
-        res.send(deletedTeacher);
+        await deleteDocument(COLLECTIONS.TEACHERS, req.params.id);
+        res.send({ message: 'Teacher deleted successfully' });
     } catch (error) {
+        console.error('Delete teacher error:', error);
         res.status(500).json(error);
     }
 };
 
 const deleteTeachers = async (req, res) => {
     try {
-        const deletionResult = await Teacher.deleteMany({ school: req.params.id });
-
-        const deletedCount = deletionResult.deletedCount || 0;
-
-        if (deletedCount === 0) {
-            res.send({ message: "No teachers found to delete" });
-            return;
+        const teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
+        
+        for (const teacher of teachers) {
+            await deleteDocument(COLLECTIONS.TEACHERS, teacher.id);
         }
-
-        const deletedTeachers = await Teacher.find({ school: req.params.id });
-
-        await Subject.updateMany(
-            { teacher: { $in: deletedTeachers.map(teacher => teacher._id) }, teacher: { $exists: true } },
-            { $unset: { teacher: "" }, $unset: { teacher: null } }
-        );
-
-        res.send(deletionResult);
+        
+        res.send({ message: 'All teachers deleted successfully' });
     } catch (error) {
+        console.error('Delete teachers error:', error);
         res.status(500).json(error);
     }
 };
 
 const deleteTeachersByClass = async (req, res) => {
     try {
-        const deletionResult = await Teacher.deleteMany({ sclassName: req.params.id });
-
-        const deletedCount = deletionResult.deletedCount || 0;
-
-        if (deletedCount === 0) {
-            res.send({ message: "No teachers found to delete" });
-            return;
+        // First get all subjects for this class
+        const subjects = await queryDocuments(COLLECTIONS.SUBJECTS, [
+            { field: 'sclassName', operator: '==', value: req.params.id }
+        ]);
+        
+        const subjectIds = subjects.map(s => s.id);
+        
+        // Delete teachers teaching these subjects
+        for (const subjectId of subjectIds) {
+            const teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+                { field: 'teachSubject', operator: '==', value: subjectId }
+            ]);
+            
+            for (const teacher of teachers) {
+                await deleteDocument(COLLECTIONS.TEACHERS, teacher.id);
+            }
         }
-
-        const deletedTeachers = await Teacher.find({ sclassName: req.params.id });
-
-        await Subject.updateMany(
-            { teacher: { $in: deletedTeachers.map(teacher => teacher._id) }, teacher: { $exists: true } },
-            { $unset: { teacher: "" }, $unset: { teacher: null } }
-        );
-
-        res.send(deletionResult);
+        
+        res.send({ message: 'Class teachers deleted successfully' });
     } catch (error) {
+        console.error('Delete teachers by class error:', error);
         res.status(500).json(error);
-    }
-};
-
-const teacherAttendance = async (req, res) => {
-    const { status, date } = req.body;
-
-    try {
-        const teacher = await Teacher.findById(req.params.id);
-
-        if (!teacher) {
-            return res.send({ message: 'Teacher not found' });
-        }
-
-        const existingAttendance = teacher.attendance.find(
-            (a) =>
-                a.date.toDateString() === new Date(date).toDateString()
-        );
-
-        if (existingAttendance) {
-            existingAttendance.status = status;
-        } else {
-            teacher.attendance.push({ date, status });
-        }
-
-        const result = await teacher.save();
-        return res.send(result);
-    } catch (error) {
-        res.status(500).json(error)
     }
 };
 
@@ -303,13 +221,73 @@ const updateTeacher = async (req, res) => {
             const salt = await bcrypt.genSalt(10);
             req.body.password = await bcrypt.hash(req.body.password, salt);
         }
-        let result = await Teacher.findByIdAndUpdate(req.params.id,
-            { $set: req.body },
-            { new: true })
-
-        result.password = undefined;
-        res.send(result)
+        
+        await updateDocument(COLLECTIONS.TEACHERS, req.params.id, req.body);
+        let result = await getDocumentById(COLLECTIONS.TEACHERS, req.params.id);
+        
+        delete result.password;
+        res.send(result);
     } catch (error) {
+        console.error('Update teacher error:', error);
+        res.status(500).json(error);
+    }
+};
+
+// Add/Remove teacher subject (for backward compatibility)
+const addTeacherSubject = async (req, res) => {
+    return updateTeacherSubject(req, res);
+};
+
+const removeTeacherSubject = async (req, res) => {
+    const { teacherId } = req.body;
+    
+    try {
+        await updateDocument(COLLECTIONS.TEACHERS, teacherId, {
+            teachSubject: null
+        });
+        
+        const result = await getDocumentById(COLLECTIONS.TEACHERS, teacherId);
+        delete result.password;
+        res.send(result);
+    } catch (error) {
+        console.error('Remove teacher subject error:', error);
+        res.status(500).json(error);
+    }
+};
+
+const teacherAttendance = async (req, res) => {
+    // Teacher attendance functionality
+    const { status, date } = req.body;
+    const teacherId = req.params.id;
+
+    try {
+        const teacher = await getDocumentById(COLLECTIONS.TEACHERS, teacherId);
+
+        if (!teacher) {
+            return res.send({ message: 'Teacher not found' });
+        }
+
+        if (!teacher.attendance) {
+            teacher.attendance = [];
+        }
+
+        const existingAttendance = teacher.attendance.find(a => a.date === date);
+
+        if (existingAttendance) {
+            existingAttendance.status = status;
+        } else {
+            teacher.attendance.push({ date, status });
+        }
+
+        await updateDocument(COLLECTIONS.TEACHERS, teacherId, {
+            attendance: teacher.attendance
+        });
+
+        const result = await getDocumentById(COLLECTIONS.TEACHERS, teacherId);
+        delete result.password;
+        res.send(result);
+    } catch (error) {
+        console.error('Teacher attendance error:', error);
         res.status(500).json(error);
     }
 };
@@ -319,12 +297,12 @@ module.exports = {
     teacherLogIn,
     getTeachers,
     getTeacherDetail,
-    updateTeacher,
     updateTeacherSubject,
     addTeacherSubject,
     removeTeacherSubject,
+    teacherAttendance,
     deleteTeacher,
     deleteTeachers,
     deleteTeachersByClass,
-    teacherAttendance
+    updateTeacher
 };

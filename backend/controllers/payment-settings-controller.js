@@ -1,18 +1,36 @@
-const PaymentSettings = require('../models/paymentSettingsSchema');
+const COLLECTIONS = require('../models/firebase/collections');
+const { 
+    createDocument, 
+    getDocumentById, 
+    updateDocument,
+    queryDocuments
+} = require('../models/firebase/helpers');
 
 // Get payment settings for a school
 const getPaymentSettings = async (req, res) => {
     try {
         console.log('Fetching payment settings for school:', req.params.schoolId);
-        let settings = await PaymentSettings.findOne({ school: req.params.schoolId });
+        
+        const settingsArray = await queryDocuments(COLLECTIONS.PAYMENT_SETTINGS, [
+            { field: 'school', operator: '==', value: req.params.schoolId }
+        ]);
+        
+        let settings = settingsArray[0];
         
         if (!settings) {
             console.log('No payment settings found, creating default');
             // Create default settings if not exists
-            settings = new PaymentSettings({
-                school: req.params.schoolId
+            settings = await createDocument(COLLECTIONS.PAYMENT_SETTINGS, {
+                school: req.params.schoolId,
+                upiId: '',
+                qrCodeImage: '',
+                phonePeEnabled: false,
+                phonePeNumber: '',
+                paytmEnabled: false,
+                paytmNumber: '',
+                bankDetails: '',
+                instructions: ''
             });
-            await settings.save();
         }
         
         console.log('Returning payment settings:', {
@@ -35,28 +53,36 @@ const updatePaymentSettings = async (req, res) => {
         console.log('Updating payment settings for school:', req.params.schoolId);
         console.log('Request body:', req.body);
         
-        let settings = await PaymentSettings.findOne({ school: req.params.schoolId });
+        const settingsArray = await queryDocuments(COLLECTIONS.PAYMENT_SETTINGS, [
+            { field: 'school', operator: '==', value: req.params.schoolId }
+        ]);
+        
+        let settings = settingsArray[0];
         
         if (!settings) {
             console.log('Creating new payment settings');
-            settings = new PaymentSettings({
+            settings = await createDocument(COLLECTIONS.PAYMENT_SETTINGS, {
                 school: req.params.schoolId,
                 ...req.body
             });
         } else {
             console.log('Updating existing payment settings');
+            const updates = {};
+            
             // Update fields, treating empty strings as valid updates
-            if (req.body.upiId !== undefined) settings.upiId = req.body.upiId;
-            if (req.body.qrCodeImage !== undefined) settings.qrCodeImage = req.body.qrCodeImage;
-            if (req.body.phonePeEnabled !== undefined) settings.phonePeEnabled = req.body.phonePeEnabled;
-            if (req.body.phonePeNumber !== undefined) settings.phonePeNumber = req.body.phonePeNumber;
-            if (req.body.paytmEnabled !== undefined) settings.paytmEnabled = req.body.paytmEnabled;
-            if (req.body.paytmNumber !== undefined) settings.paytmNumber = req.body.paytmNumber;
-            if (req.body.bankDetails !== undefined) settings.bankDetails = req.body.bankDetails;
-            if (req.body.instructions !== undefined) settings.instructions = req.body.instructions;
+            if (req.body.upiId !== undefined) updates.upiId = req.body.upiId;
+            if (req.body.qrCodeImage !== undefined) updates.qrCodeImage = req.body.qrCodeImage;
+            if (req.body.phonePeEnabled !== undefined) updates.phonePeEnabled = req.body.phonePeEnabled;
+            if (req.body.phonePeNumber !== undefined) updates.phonePeNumber = req.body.phonePeNumber;
+            if (req.body.paytmEnabled !== undefined) updates.paytmEnabled = req.body.paytmEnabled;
+            if (req.body.paytmNumber !== undefined) updates.paytmNumber = req.body.paytmNumber;
+            if (req.body.bankDetails !== undefined) updates.bankDetails = req.body.bankDetails;
+            if (req.body.instructions !== undefined) updates.instructions = req.body.instructions;
+            
+            await updateDocument(COLLECTIONS.PAYMENT_SETTINGS, settings.id, updates);
+            settings = await getDocumentById(COLLECTIONS.PAYMENT_SETTINGS, settings.id);
         }
         
-        await settings.save();
         console.log('Payment settings saved successfully');
         console.log('Saved settings:', {
             upiId: settings.upiId,

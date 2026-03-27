@@ -1,17 +1,19 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const Admin = require('../models/adminSchema.js');
-const Sclass = require('../models/sclassSchema.js');
-const Student = require('../models/studentSchema.js');
-const Teacher = require('../models/teacherSchema.js');
-const Subject = require('../models/subjectSchema.js');
-const Notice = require('../models/noticeSchema.js');
-const Complain = require('../models/complainSchema.js');
+const { getFirestore } = require('../config/firebase');
+const COLLECTIONS = require('../models/firebase/collections');
+const { 
+    createDocument, 
+    getDocumentById, 
+    queryDocuments, 
+    updateDocument,
+    deleteDocument 
+} = require('../models/firebase/helpers');
 
 // Generate JWT token
 const generateToken = (user) => {
     return jwt.sign(
-        { id: user._id, role: 'Admin', email: user.email },
+        { id: user.id, role: 'Admin', email: user.email },
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
     );
@@ -22,55 +24,76 @@ const adminRegister = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPass = await bcrypt.hash(req.body.password, salt);
 
-        const admin = new Admin({
+        const adminData = {
             ...req.body,
-            password: hashedPass
-        });
+            password: hashedPass,
+            role: 'Admin',
+            isActive: true
+        };
 
-        const existingAdminByEmail = await Admin.findOne({ email: req.body.email });
-        const existingSchool = await Admin.findOne({ schoolName: req.body.schoolName });
+        // Check if email already exists
+        const existingAdminByEmail = await queryDocuments(COLLECTIONS.ADMINS, [
+            { field: 'email', operator: '==', value: req.body.email }
+        ]);
 
-        if (existingAdminByEmail) {
+        // Check if school name already exists
+        const existingSchool = await queryDocuments(COLLECTIONS.ADMINS, [
+            { field: 'schoolName', operator: '==', value: req.body.schoolName }
+        ]);
+
+        if (existingAdminByEmail.length > 0) {
             res.send({ message: 'Email already exists' });
         }
-        else if (existingSchool) {
+        else if (existingSchool.length > 0) {
             res.send({ message: 'School name already exists' });
         }
         else {
-            let result = await admin.save();
-            result.password = undefined;
+            let result = await createDocument(COLLECTIONS.ADMINS, adminData);
+            delete result.password;
             
             // Generate JWT token
             const token = generateToken(result);
             
-            res.send({ ...result._doc, token, role: 'Admin' });
+            res.send({ ...result, token, role: 'Admin' });
         }
     } catch (err) {
+        console.error('Admin registration error:', err);
         res.status(500).json(err);
     }
 };
 
 const adminLogIn = async (req, res) => {
     if (req.body.email && req.body.password) {
-        let admin = await Admin.findOne({ email: req.body.email });
-        if (admin) {
-            const validated = await bcrypt.compare(req.body.password, admin.password);
-            if (validated) {
-                // Update last login
-                admin.lastLogin = new Date();
-                await admin.save();
+        try {
+            const admins = await queryDocuments(COLLECTIONS.ADMINS, [
+                { field: 'email', operator: '==', value: req.body.email }
+            ]);
+
+            if (admins.length > 0) {
+                const admin = admins[0];
+                const validated = await bcrypt.compare(req.body.password, admin.password);
                 
-                admin.password = undefined;
-                
-                // Generate JWT token
-                const token = generateToken(admin);
-                
-                res.send({ ...admin._doc, token, role: 'Admin' });
+                if (validated) {
+                    // Update last login
+                    await updateDocument(COLLECTIONS.ADMINS, admin.id, {
+                        lastLogin: new Date().toISOString()
+                    });
+                    
+                    delete admin.password;
+                    
+                    // Generate JWT token
+                    const token = generateToken(admin);
+                    
+                    res.send({ ...admin, token, role: 'Admin' });
+                } else {
+                    res.send({ message: "Invalid password" });
+                }
             } else {
-                res.send({ message: "Invalid password" });
+                res.send({ message: "User not found" });
             }
-        } else {
-            res.send({ message: "User not found" });
+        } catch (err) {
+            console.error('Admin login error:', err);
+            res.status(500).json(err);
         }
     } else {
         res.send({ message: "Email and password are required" });
@@ -79,53 +102,72 @@ const adminLogIn = async (req, res) => {
 
 const getAdminDetail = async (req, res) => {
     try {
-        let admin = await Admin.findById(req.params.id);
+        let admin = await getDocumentById(COLLECTIONS.ADMINS, req.params.id);
         if (admin) {
-            admin.password = undefined;
+            delete admin.password;
             res.send(admin);
         }
         else {
             res.send({ message: "No admin found" });
         }
     } catch (err) {
+        console.error('Get admin detail error:', err);
         res.status(500).json(err);
     }
 }
 
+// Uncomment and update these functions as needed
 // const deleteAdmin = async (req, res) => {
 //     try {
-//         const result = await Admin.findByIdAndDelete(req.params.id)
-
-//         await Sclass.deleteMany({ school: req.params.id });
-//         await Student.deleteMany({ school: req.params.id });
-//         await Teacher.deleteMany({ school: req.params.id });
-//         await Subject.deleteMany({ school: req.params.id });
-//         await Notice.deleteMany({ school: req.params.id });
-//         await Complain.deleteMany({ school: req.params.id });
-
-//         res.send(result)
+//         await deleteDocument(COLLECTIONS.ADMINS, req.params.id);
+//
+//         // Delete all related documents
+//         const db = getFirestore();
+//         const schoolId = req.params.id;
+//         
+//         // Delete classes
+//         const classes = await queryDocuments(COLLECTIONS.CLASSES, [
+//             { field: 'school', operator: '==', value: schoolId }
+//         ]);
+//         for (const cls of classes) {
+//             await deleteDocument(COLLECTIONS.CLASSES, cls.id);
+//         }
+//         
+//         // Delete students
+//         const students = await queryDocuments(COLLECTIONS.STUDENTS, [
+//             { field: 'school', operator: '==', value: schoolId }
+//         ]);
+//         for (const student of students) {
+//             await deleteDocument(COLLECTIONS.STUDENTS, student.id);
+//         }
+//         
+//         // Similar for teachers, subjects, notices, complains
+//
+//         res.send({ message: 'Admin and related data deleted successfully' });
 //     } catch (error) {
-//         res.status(500).json(err);
+//         console.error('Delete admin error:', error);
+//         res.status(500).json(error);
 //     }
 // }
 
 // const updateAdmin = async (req, res) => {
 //     try {
+//         const updates = { ...req.body };
+//         
 //         if (req.body.password) {
-//             const salt = await bcrypt.genSalt(10)
-//             res.body.password = await bcrypt.hash(res.body.password, salt)
+//             const salt = await bcrypt.genSalt(10);
+//             updates.password = await bcrypt.hash(req.body.password, salt);
 //         }
-//         let result = await Admin.findByIdAndUpdate(req.params.id,
-//             { $set: req.body },
-//             { new: true })
-
-//         result.password = undefined;
-//         res.send(result)
+//         
+//         await updateDocument(COLLECTIONS.ADMINS, req.params.id, updates);
+//         let result = await getDocumentById(COLLECTIONS.ADMINS, req.params.id);
+//         
+//         delete result.password;
+//         res.send(result);
 //     } catch (error) {
-//         res.status(500).json(err);
+//         console.error('Update admin error:', error);
+//         res.status(500).json(error);
 //     }
 // }
-
-// module.exports = { adminRegister, adminLogIn, getAdminDetail, deleteAdmin, updateAdmin };
 
 module.exports = { adminRegister, adminLogIn, getAdminDetail };

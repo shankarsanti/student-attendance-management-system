@@ -1,164 +1,225 @@
-const Subject = require('../models/subjectSchema.js');
-const Teacher = require('../models/teacherSchema.js');
-const Student = require('../models/studentSchema.js');
+const { getFirestore } = require('../config/firebase');
+const COLLECTIONS = require('../models/firebase/collections');
+const { 
+    createDocument, 
+    getDocumentById, 
+    queryDocuments, 
+    updateDocument,
+    deleteDocument
+} = require('../models/firebase/helpers');
 
 const subjectCreate = async (req, res) => {
     try {
-        const subjects = req.body.subjects.map((subject) => ({
-            subName: subject.subName,
-            subCode: subject.subCode,
-            sessions: subject.sessions,
-        }));
+        // Check if subject already exists for this class
+        const existingSubject = await queryDocuments(COLLECTIONS.SUBJECTS, [
+            { field: 'subName', operator: '==', value: req.body.subName },
+            { field: 'sclassName', operator: '==', value: req.body.sclassName }
+        ]);
 
-        const existingSubjectBySubCode = await Subject.findOne({
-            'subjects.subCode': subjects[0].subCode,
-            school: req.body.adminID,
-        });
-
-        if (existingSubjectBySubCode) {
-            res.send({ message: 'Sorry this subcode must be unique as it already exists' });
+        if (existingSubject.length > 0) {
+            res.send({ message: 'Subject already exists for this class' });
         } else {
-            const newSubjects = subjects.map((subject) => ({
-                ...subject,
-                sclassName: req.body.sclassName,
-                school: req.body.adminID,
-            }));
-
-            const result = await Subject.insertMany(newSubjects);
-            res.send(result);
+            const subject = await createDocument(COLLECTIONS.SUBJECTS, req.body);
+            res.send(subject);
         }
     } catch (err) {
-        res.status(500).json(err);
-    }
-};
-
-const allSubjects = async (req, res) => {
-    try {
-        let subjects = await Subject.find({ school: req.params.id })
-            .populate("sclassName", "sclassName")
-        if (subjects.length > 0) {
-            res.send(subjects)
-        } else {
-            res.send({ message: "No subjects found" });
-        }
-    } catch (err) {
+        console.error('Subject create error:', err);
         res.status(500).json(err);
     }
 };
 
 const classSubjects = async (req, res) => {
     try {
-        let subjects = await Subject.find({ sclassName: req.params.id })
+        let subjects = await queryDocuments(COLLECTIONS.SUBJECTS, [
+            { field: 'sclassName', operator: '==', value: req.params.id }
+        ]);
+        
         if (subjects.length > 0) {
-            res.send(subjects)
+            // Populate teacher details for each subject
+            for (let subject of subjects) {
+                const teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+                    { field: 'teachSubject', operator: '==', value: subject.id }
+                ]);
+                subject.teacher = teachers.length > 0 ? teachers[0] : null;
+            }
+            res.send(subjects);
         } else {
             res.send({ message: "No subjects found" });
         }
     } catch (err) {
+        console.error('Get class subjects error:', err);
         res.status(500).json(err);
     }
 };
 
 const freeSubjectList = async (req, res) => {
     try {
-        let subjects = await Subject.find({ sclassName: req.params.id, teacher: { $exists: false } });
+        let subjects = await queryDocuments(COLLECTIONS.SUBJECTS, [
+            { field: 'sclassName', operator: '==', value: req.params.id }
+        ]);
+        
+        // Filter subjects that don't have a teacher assigned
+        const freeSubjects = [];
+        for (let subject of subjects) {
+            const teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+                { field: 'teachSubject', operator: '==', value: subject.id }
+            ]);
+            if (teachers.length === 0) {
+                freeSubjects.push(subject);
+            }
+        }
+        
+        if (freeSubjects.length > 0) {
+            res.send(freeSubjects);
+        } else {
+            res.send({ message: "No free subjects found" });
+        }
+    } catch (err) {
+        console.error('Get free subject list error:', err);
+        res.status(500).json(err);
+    }
+};
+
+const allSubjects = async (req, res) => {
+    try {
+        let subjects = await queryDocuments(COLLECTIONS.SUBJECTS, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
+        
         if (subjects.length > 0) {
+            // Populate class and teacher details
+            for (let subject of subjects) {
+                if (subject.sclassName) {
+                    subject.sclassName = await getDocumentById(COLLECTIONS.CLASSES, subject.sclassName);
+                }
+                
+                const teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+                    { field: 'teachSubject', operator: '==', value: subject.id }
+                ]);
+                subject.teacher = teachers.length > 0 ? teachers[0] : null;
+            }
             res.send(subjects);
         } else {
             res.send({ message: "No subjects found" });
         }
     } catch (err) {
+        console.error('Get all subjects error:', err);
         res.status(500).json(err);
     }
 };
 
 const getSubjectDetail = async (req, res) => {
     try {
-        let subject = await Subject.findById(req.params.id);
+        let subject = await getDocumentById(COLLECTIONS.SUBJECTS, req.params.id);
+        
         if (subject) {
-            subject = await subject.populate("sclassName", "sclassName")
-            subject = await subject.populate("teacher", "name")
+            // Populate class details
+            if (subject.sclassName) {
+                subject.sclassName = await getDocumentById(COLLECTIONS.CLASSES, subject.sclassName);
+            }
+            
+            // Get teacher for this subject
+            const teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+                { field: 'teachSubject', operator: '==', value: subject.id }
+            ]);
+            subject.teacher = teachers.length > 0 ? teachers[0] : null;
+            
             res.send(subject);
-        }
-        else {
+        } else {
             res.send({ message: "No subject found" });
         }
     } catch (err) {
+        console.error('Get subject detail error:', err);
         res.status(500).json(err);
     }
-}
+};
 
 const deleteSubject = async (req, res) => {
     try {
-        const deletedSubject = await Subject.findByIdAndDelete(req.params.id);
-
-        // Set the teachSubject field to null in teachers
-        await Teacher.updateOne(
-            { teachSubject: deletedSubject._id },
-            { $unset: { teachSubject: "" }, $unset: { teachSubject: null } }
-        );
-
-        // Remove the objects containing the deleted subject from students' examResult array
-        await Student.updateMany(
-            {},
-            { $pull: { examResult: { subName: deletedSubject._id } } }
-        );
-
-        // Remove the objects containing the deleted subject from students' attendance array
-        await Student.updateMany(
-            {},
-            { $pull: { attendance: { subName: deletedSubject._id } } }
-        );
-
-        res.send(deletedSubject);
+        // Delete subject
+        await deleteDocument(COLLECTIONS.SUBJECTS, req.params.id);
+        
+        // Update teachers teaching this subject
+        const teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+            { field: 'teachSubject', operator: '==', value: req.params.id }
+        ]);
+        
+        for (const teacher of teachers) {
+            await updateDocument(COLLECTIONS.TEACHERS, teacher.id, {
+                teachSubject: null
+            });
+        }
+        
+        res.send({ message: 'Subject deleted successfully' });
     } catch (error) {
+        console.error('Delete subject error:', error);
         res.status(500).json(error);
     }
 };
 
 const deleteSubjects = async (req, res) => {
     try {
-        const deletedSubjects = await Subject.deleteMany({ school: req.params.id });
-
-        // Set the teachSubject field to null in teachers
-        await Teacher.updateMany(
-            { teachSubject: { $in: deletedSubjects.map(subject => subject._id) } },
-            { $unset: { teachSubject: "" }, $unset: { teachSubject: null } }
-        );
-
-        // Set examResult and attendance to null in all students
-        await Student.updateMany(
-            {},
-            { $set: { examResult: null, attendance: null } }
-        );
-
-        res.send(deletedSubjects);
+        const subjects = await queryDocuments(COLLECTIONS.SUBJECTS, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
+        
+        for (const subject of subjects) {
+            await deleteDocument(COLLECTIONS.SUBJECTS, subject.id);
+            
+            // Update teachers
+            const teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+                { field: 'teachSubject', operator: '==', value: subject.id }
+            ]);
+            
+            for (const teacher of teachers) {
+                await updateDocument(COLLECTIONS.TEACHERS, teacher.id, {
+                    teachSubject: null
+                });
+            }
+        }
+        
+        res.send({ message: 'All subjects deleted successfully' });
     } catch (error) {
+        console.error('Delete subjects error:', error);
         res.status(500).json(error);
     }
 };
 
 const deleteSubjectsByClass = async (req, res) => {
     try {
-        const deletedSubjects = await Subject.deleteMany({ sclassName: req.params.id });
-
-        // Set the teachSubject field to null in teachers
-        await Teacher.updateMany(
-            { teachSubject: { $in: deletedSubjects.map(subject => subject._id) } },
-            { $unset: { teachSubject: "" }, $unset: { teachSubject: null } }
-        );
-
-        // Set examResult and attendance to null in all students
-        await Student.updateMany(
-            {},
-            { $set: { examResult: null, attendance: null } }
-        );
-
-        res.send(deletedSubjects);
+        const subjects = await queryDocuments(COLLECTIONS.SUBJECTS, [
+            { field: 'sclassName', operator: '==', value: req.params.id }
+        ]);
+        
+        for (const subject of subjects) {
+            await deleteDocument(COLLECTIONS.SUBJECTS, subject.id);
+            
+            // Update teachers
+            const teachers = await queryDocuments(COLLECTIONS.TEACHERS, [
+                { field: 'teachSubject', operator: '==', value: subject.id }
+            ]);
+            
+            for (const teacher of teachers) {
+                await updateDocument(COLLECTIONS.TEACHERS, teacher.id, {
+                    teachSubject: null
+                });
+            }
+        }
+        
+        res.send({ message: 'Class subjects deleted successfully' });
     } catch (error) {
+        console.error('Delete subjects by class error:', error);
         res.status(500).json(error);
     }
 };
 
-
-module.exports = { subjectCreate, freeSubjectList, classSubjects, getSubjectDetail, deleteSubjectsByClass, deleteSubjects, deleteSubject, allSubjects };
+module.exports = {
+    subjectCreate,
+    classSubjects,
+    freeSubjectList,
+    allSubjects,
+    getSubjectDetail,
+    deleteSubject,
+    deleteSubjects,
+    deleteSubjectsByClass
+};

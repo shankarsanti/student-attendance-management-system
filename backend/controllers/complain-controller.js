@@ -1,59 +1,111 @@
-const Complain = require('../models/complainSchema.js');
+const COLLECTIONS = require('../models/firebase/collections');
+const { 
+    createDocument, 
+    getDocumentById, 
+    updateDocument,
+    deleteDocument,
+    queryDocuments
+} = require('../models/firebase/helpers');
 
 const complainCreate = async (req, res) => {
     try {
-        const complain = new Complain(req.body)
-        const result = await complain.save()
-        res.send(result)
+        const result = await createDocument(COLLECTIONS.COMPLAINS, req.body);
+        res.send(result);
     } catch (err) {
+        console.error('Complain create error:', err);
         res.status(500).json(err);
     }
 };
 
 const complainList = async (req, res) => {
     try {
-        let complains = await Complain.find({ school: req.params.id }).populate("user", "name");
+        let complains = await queryDocuments(COLLECTIONS.COMPLAINS, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
+        
         if (complains.length > 0) {
-            res.send(complains)
+            // Populate user data
+            for (let complain of complains) {
+                if (complain.user) {
+                    // Try to find user in students, teachers, or admins
+                    let userData = await getDocumentById(COLLECTIONS.STUDENTS, complain.user);
+                    if (!userData) userData = await getDocumentById(COLLECTIONS.TEACHERS, complain.user);
+                    if (!userData) userData = await getDocumentById(COLLECTIONS.ADMINS, complain.user);
+                    
+                    if (userData) {
+                        complain.user = {
+                            id: userData.id,
+                            name: userData.name
+                        };
+                    }
+                }
+            }
+            res.send(complains);
         } else {
             res.send({ message: "No complains found" });
         }
     } catch (err) {
+        console.error('Complain list error:', err);
         res.status(500).json(err);
     }
 };
 
 const updateComplainStatus = async (req, res) => {
     try {
-        const result = await Complain.findByIdAndUpdate(
-            req.params.id,
-            { status: req.body.status },
-            { new: true }
-        ).populate("user", "name");
+        await updateDocument(COLLECTIONS.COMPLAINS, req.params.id, {
+            status: req.body.status
+        });
+        
+        let result = await getDocumentById(COLLECTIONS.COMPLAINS, req.params.id);
+        
+        // Populate user data
+        if (result && result.user) {
+            let userData = await getDocumentById(COLLECTIONS.STUDENTS, result.user);
+            if (!userData) userData = await getDocumentById(COLLECTIONS.TEACHERS, result.user);
+            if (!userData) userData = await getDocumentById(COLLECTIONS.ADMINS, result.user);
+            
+            if (userData) {
+                result.user = {
+                    id: userData.id,
+                    name: userData.name
+                };
+            }
+        }
+        
         res.send(result);
     } catch (error) {
+        console.error('Update complain status error:', error);
         res.status(500).json(error);
     }
 };
 
 const deleteComplain = async (req, res) => {
     try {
-        const result = await Complain.findByIdAndDelete(req.params.id);
+        const result = await getDocumentById(COLLECTIONS.COMPLAINS, req.params.id);
+        await deleteDocument(COLLECTIONS.COMPLAINS, req.params.id);
         res.send(result);
     } catch (error) {
+        console.error('Delete complain error:', error);
         res.status(500).json(error);
     }
 };
 
 const deleteComplains = async (req, res) => {
     try {
-        const result = await Complain.deleteMany({ school: req.params.id });
-        if (result.deletedCount === 0) {
+        const complains = await queryDocuments(COLLECTIONS.COMPLAINS, [
+            { field: 'school', operator: '==', value: req.params.id }
+        ]);
+        
+        if (complains.length === 0) {
             res.send({ message: "No complains found to delete" });
         } else {
-            res.send(result);
+            for (const complain of complains) {
+                await deleteDocument(COLLECTIONS.COMPLAINS, complain.id);
+            }
+            res.send({ deletedCount: complains.length });
         }
     } catch (error) {
+        console.error('Delete complains error:', error);
         res.status(500).json(error);
     }
 };

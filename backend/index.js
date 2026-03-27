@@ -1,8 +1,7 @@
 const express = require("express")
 const cors = require("cors")
-const mongoose = require("mongoose")
 const dotenv = require("dotenv")
-// const bodyParser = require("body-parser")
+const { initializeFirebase } = require("./config/firebase")
 
 dotenv.config();
 
@@ -79,13 +78,12 @@ app.get('/', (req, res) => {
     });
 });
 
-mongoose
-    .connect(process.env.MONGO_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    })
-    .then(console.log("Connected to MongoDB"))
-    .catch((err) => console.log("NOT CONNECTED TO NETWORK", err))
+// Initialize Firebase
+try {
+    initializeFirebase();
+} catch (err) {
+    console.log("NOT CONNECTED TO FIREBASE", err)
+}
 
 app.use('/', Routes);
 app.use('/auth', AuthRoutes);

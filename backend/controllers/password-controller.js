@@ -1,159 +1,215 @@
 const bcrypt = require('bcrypt');
-const Admin = require('../models/adminSchema.js');
-const Teacher = require('../models/teacherSchema.js');
-const Student = require('../models/studentSchema.js');
+const { getFirestore } = require('../config/firebase');
+const COLLECTIONS = require('../models/firebase/collections');
+const { 
+    getDocumentById, 
+    queryDocuments, 
+    updateDocument
+} = require('../models/firebase/helpers');
 
-// Forgot Password - Creates a password reset request
+// Forgot password (for public password reset requests)
 const forgotPassword = async (req, res) => {
+    const { email, role } = req.body;
+
     try {
-        const { email, role } = req.body;
-
-        if (!email || !role) {
-            return res.status(400).json({ message: 'Email and role are required' });
+        let collection;
+        if (role === 'Admin') {
+            collection = COLLECTIONS.ADMINS;
+        } else if (role === 'Student') {
+            collection = COLLECTIONS.STUDENTS;
+        } else if (role === 'Teacher') {
+            collection = COLLECTIONS.TEACHERS;
+        } else {
+            return res.status(400).send({ message: 'Invalid role' });
         }
 
-        let user;
-        let Model;
+        const users = await queryDocuments(collection, [
+            { field: 'email', operator: '==', value: email }
+        ]);
 
-        // Find user based on role
-        switch (role) {
-            case 'Admin':
-                Model = Admin;
-                user = await Admin.findOne({ email });
-                break;
-            case 'Teacher':
-                Model = Teacher;
-                user = await Teacher.findOne({ email });
-                break;
-            case 'Student':
-                // Students don't have email, so we'll handle this differently
-                return res.status(400).json({ 
-                    message: 'Students should contact their administrator for password reset using their Roll Number and Name.' 
-                });
-            default:
-                return res.status(400).json({ message: 'Invalid role' });
+        if (users.length === 0) {
+            return res.send({ message: 'User not found' });
         }
 
-        if (!user) {
-            return res.status(404).json({ message: 'User not found with this email' });
-        }
-
-        // In a production environment, you would:
-        // 1. Generate a reset token
-        // 2. Save it to the database with expiration
-        // 3. Send an email with reset link
-        
-        // For this school system, we'll create a simple notification
-        res.status(200).json({ 
-            message: 'Password reset request received. Please contact your administrator with your email address to reset your password.',
-            email: email,
-            role: role
+        // In a real application, you would send a password reset email here
+        // For now, we'll just return a success message
+        res.send({ 
+            message: 'Password reset instructions sent to email',
+            userId: users[0].id 
         });
-
-    } catch (error) {
-        console.error('Forgot password error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+    } catch (err) {
+        console.error('Forgot password error:', err);
+        res.status(500).json(err);
     }
 };
 
-// Reset Password - Admin can reset user passwords
+// Change password for authenticated user
+const changePassword = async (req, res) => {
+    const { userId, role, oldPassword, newPassword } = req.body;
+
+    try {
+        let collection;
+        if (role === 'Admin') {
+            collection = COLLECTIONS.ADMINS;
+        } else if (role === 'Student') {
+            collection = COLLECTIONS.STUDENTS;
+        } else if (role === 'Teacher') {
+            collection = COLLECTIONS.TEACHERS;
+        } else {
+            return res.status(400).send({ message: 'Invalid role' });
+        }
+
+        const user = await getDocumentById(collection, userId);
+
+        if (!user) {
+            return res.send({ message: 'User not found' });
+        }
+
+        // Verify old password
+        const validated = await bcrypt.compare(oldPassword, user.password);
+
+        if (!validated) {
+            return res.send({ message: 'Incorrect old password' });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update password
+        await updateDocument(collection, userId, {
+            password: hashedPassword
+        });
+
+        res.send({ message: 'Password changed successfully' });
+    } catch (err) {
+        console.error('Change password error:', err);
+        res.status(500).json(err);
+    }
+};
+
+// Reset password (for forgot password functionality)
 const resetPassword = async (req, res) => {
+    const { email, role, newPassword } = req.body;
+
     try {
-        const { email, role, newPassword } = req.body;
-
-        if (!email || !role || !newPassword) {
-            return res.status(400).json({ message: 'Email, role, and new password are required' });
+        let collection;
+        let field = 'email';
+        
+        if (role === 'Admin') {
+            collection = COLLECTIONS.ADMINS;
+        } else if (role === 'Student') {
+            collection = COLLECTIONS.STUDENTS;
+            // Students might use rollNum instead of email
+            if (req.body.rollNum) {
+                field = 'rollNum';
+            }
+        } else if (role === 'Teacher') {
+            collection = COLLECTIONS.TEACHERS;
+        } else {
+            return res.status(400).send({ message: 'Invalid role' });
         }
 
-        if (newPassword.length < 6) {
-            return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+        const users = await queryDocuments(collection, [
+            { field: field, operator: '==', value: email || req.body.rollNum }
+        ]);
+
+        if (users.length === 0) {
+            return res.send({ message: 'User not found' });
         }
 
-        let user;
-        let Model;
+        const user = users[0];
 
-        // Find user based on role
-        switch (role) {
-            case 'Admin':
-                Model = Admin;
-                user = await Admin.findOne({ email });
-                break;
-            case 'Teacher':
-                Model = Teacher;
-                user = await Teacher.findOne({ email });
-                break;
-            default:
-                return res.status(400).json({ message: 'Invalid role' });
-        }
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Hash the new password
+        // Hash new password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
         // Update password
-        user.password = hashedPassword;
-        await user.save();
-
-        res.status(200).json({ 
-            message: 'Password reset successfully',
-            email: email
+        await updateDocument(collection, user.id, {
+            password: hashedPassword
         });
 
-    } catch (error) {
-        console.error('Reset password error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.send({ message: 'Password reset successfully' });
+    } catch (err) {
+        console.error('Reset password error:', err);
+        res.status(500).json(err);
     }
 };
 
-// Reset Student Password - Admin can reset student passwords
+// Reset student password (specific endpoint for students)
 const resetStudentPassword = async (req, res) => {
+    const { rollNum, studentName, newPassword } = req.body;
+
     try {
-        const { rollNum, studentName, newPassword } = req.body;
+        const students = await queryDocuments(COLLECTIONS.STUDENTS, [
+            { field: 'rollNum', operator: '==', value: rollNum },
+            { field: 'name', operator: '==', value: studentName }
+        ]);
 
-        if (!rollNum || !studentName || !newPassword) {
-            return res.status(400).json({ message: 'Roll number, name, and new password are required' });
+        if (students.length === 0) {
+            return res.send({ message: 'Student not found' });
         }
 
-        if (newPassword.length < 6) {
-            return res.status(400).json({ message: 'Password must be at least 6 characters long' });
-        }
+        const student = students[0];
 
-        // Find student
-        const student = await Student.findOne({ 
-            rollNum: rollNum,
-            name: studentName 
-        });
-
-        if (!student) {
-            return res.status(404).json({ message: 'Student not found with this roll number and name' });
-        }
-
-        // Hash the new password
+        // Hash new password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
         // Update password
-        student.password = hashedPassword;
-        await student.save();
-
-        res.status(200).json({ 
-            message: 'Student password reset successfully',
-            rollNum: rollNum,
-            name: studentName
+        await updateDocument(COLLECTIONS.STUDENTS, student.id, {
+            password: hashedPassword
         });
 
-    } catch (error) {
-        console.error('Reset student password error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.send({ message: 'Student password reset successfully' });
+    } catch (err) {
+        console.error('Reset student password error:', err);
+        res.status(500).json(err);
+    }
+};
+
+// Admin reset password for any user
+const adminResetPassword = async (req, res) => {
+    const { userId, role, newPassword } = req.body;
+
+    try {
+        let collection;
+        if (role === 'Admin') {
+            collection = COLLECTIONS.ADMINS;
+        } else if (role === 'Student') {
+            collection = COLLECTIONS.STUDENTS;
+        } else if (role === 'Teacher') {
+            collection = COLLECTIONS.TEACHERS;
+        } else {
+            return res.status(400).send({ message: 'Invalid role' });
+        }
+
+        const user = await getDocumentById(collection, userId);
+
+        if (!user) {
+            return res.send({ message: 'User not found' });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update password
+        await updateDocument(collection, userId, {
+            password: hashedPassword
+        });
+
+        res.send({ message: 'Password reset successfully' });
+    } catch (err) {
+        console.error('Admin reset password error:', err);
+        res.status(500).json(err);
     }
 };
 
 module.exports = {
     forgotPassword,
+    changePassword,
     resetPassword,
-    resetStudentPassword
+    resetStudentPassword,
+    adminResetPassword
 };

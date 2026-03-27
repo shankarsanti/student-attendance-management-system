@@ -1,0 +1,12 @@
+# This folder contains Firebase configuration
+# 
+# IMPORTANT: Place your serviceAccountKey.json file here
+# 
+# To get your service account key:
+# 1. Go to Firebase Console
+# 2. Project Settings → Service Accounts
+# 3. Click "Generate New Private Key"
+# 4. Save as serviceAccountKey.json in this folder
+# 
+# DO NOT commit serviceAccountKey.json to git!
+# It's already in .gitignore
