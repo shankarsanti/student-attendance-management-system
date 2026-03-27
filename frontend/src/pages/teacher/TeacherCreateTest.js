@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Box, Button, CircularProgress, TextField, MenuItem, Typography, Paper } from '@mui/material';
 import axios from 'axios';
 import Popup from '../../components/Popup';
 
 const TeacherCreateTest = () => {
-    const dispatch = useDispatch();
     const navigate = useNavigate();
     const { currentUser } = useSelector(state => state.user);
 

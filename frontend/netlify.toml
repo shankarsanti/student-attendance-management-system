@@ -1,14 +1,8 @@
-[build]
-  base = "frontend"
-  command = "npm run build"
-  publish = "frontend/build"
-
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+[build]
+  command = "CI=false npm run build"
+  publish = "build"

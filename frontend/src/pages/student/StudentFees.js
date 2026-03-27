@@ -21,7 +21,6 @@ import {
     DialogContent,
     DialogActions,
     TextField,
-    MenuItem,
     Divider
 } from '@mui/material';
 import {
@@ -29,8 +28,7 @@ import {
     AccountBalance,
     CheckCircle,
     Warning,
-    Receipt,
-    CalendarToday
+    Receipt
 } from '@mui/icons-material';
 import axios from 'axios';
 import Popup from '../../components/Popup';
@@ -236,7 +234,7 @@ const StudentFees = () => {
             // School Info
             doc.setFontSize(12);
             doc.setFont('helvetica', 'normal');
-            doc.text('School Management System', 105, 30, { align: 'center' });
+            doc.text('Student Management System', 105, 30, { align: 'center' });
             
             // Receipt Number
             doc.setFontSize(10);

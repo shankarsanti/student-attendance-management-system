@@ -1,0 +1,41 @@
+═══════════════════════════════════════════════════════════════
+  🚀 PUSH TO GITHUB - SIMPLE INSTRUCTIONS
+═══════════════════════════════════════════════════════════════
+
+OPTION 1: Use the Script (EASIEST)
+────────────────────────────────────────────────────────────────
+
+cd ~/clg\ project/SAMS/MERN-School-Management-System
+./git-push.sh
+
+Then follow the prompts!
+
+═══════════════════════════════════════════════════════════════
+
+OPTION 2: Manual Commands
+────────────────────────────────────────────────────────────────
+
+cd ~/clg\ project/SAMS/MERN-School-Management-System
+
+git add .
+git commit -m "Update: Fixed build errors and cleaned up project"
+git push student-repo main
+
+═══════════════════════════════════════════════════════════════
+
+Your GitHub Repository:
+https://github.com/shankarsanti/student-attendance-management-system
+
+═══════════════════════════════════════════════════════════════
+
+WHAT WILL BE PUSHED:
+────────────────────────────────────────────────────────────────
+
+✅ Fixed backend (module.exports, vercel.json)
+✅ Fixed frontend (removed unused imports)
+✅ Renamed to "Student Management System"
+✅ Cleaned up unnecessary files
+✅ Build succeeds with no errors
+✅ Ready for Netlify deployment
+
+═══════════════════════════════════════════════════════════════

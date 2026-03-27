@@ -10,7 +10,6 @@ import {
     Typography,
     Paper,
     Grid,
-    Chip,
     IconButton
 } from '@mui/material';
 import { Add, Remove } from '@mui/icons-material';

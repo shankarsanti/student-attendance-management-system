@@ -3,12 +3,6 @@ import { useSelector } from 'react-redux';
 import {
     Box,
     Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
     Typography,
     Chip,
     CircularProgress,
@@ -22,8 +16,7 @@ import {
     AccordionDetails,
     List,
     ListItem,
-    ListItemText,
-    Divider
+    ListItemText
 } from '@mui/material';
 import { ExpandMore, CalendarToday, Schedule, MenuBook, CheckCircle } from '@mui/icons-material';
 import axios from 'axios';

@@ -42,6 +42,28 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        message: 'Server is running',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+    res.status(200).json({ 
+        message: 'Student Management System API',
+        version: '1.0.0',
+        endpoints: {
+            admin: '/AdminLogin',
+            student: '/StudentLogin',
+            teacher: '/TeacherLogin'
+        }
+    });
+});
+
 mongoose
     .connect(process.env.MONGO_URL, {
         useNewUrlParser: true,
@@ -54,6 +76,12 @@ app.use('/', Routes);
 app.use('/auth', AuthRoutes);
 app.use('/', PasswordRoutes);
 
-app.listen(PORT, () => {
-    console.log(`Server started at port no. ${PORT}`)
-})
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server started at port no. ${PORT}`)
+    })
+}
+
+// Export for Vercel serverless
+module.exports = app;

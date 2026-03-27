@@ -1,9 +1,9 @@
 <h1 align="center">
-    SCHOOL MANAGEMENT SYSTEM
+    STUDENT MANAGEMENT SYSTEM
 </h1>
 
 <h3 align="center">
-Streamline school management, class organization, and add students and faculty.<br>
+Streamline student management, class organization, and add students and faculty.<br>
 Seamlessly track attendance, assess performance, and provide feedback. <br>
 Access records, view marks, and communicate effortlessly.
 </h3>
@@ -18,7 +18,7 @@ Access records, view marks, and communicate effortlessly.
 
 # About
 
-The School Management System is a comprehensive web-based application built using the MERN (MongoDB, Express.js, React.js, Node.js) stack. It streamlines school management, class organization, and facilitates seamless communication between students, teachers, and administrators.
+The Student Management System is a comprehensive web-based application built using the MERN (MongoDB, Express.js, React.js, Node.js) stack. It streamlines school management, class organization, and facilitates seamless communication between students, teachers, and administrators.
 
 ## 🚀 Quick Links
 
@@ -571,11 +571,11 @@ For support, email shankarsanti@example.com or open an issue on GitHub.
 - ✅ Multiple bug fixes
 
 ### v1.0.0 - Initial Release
-- Basic school management features
+- Basic student management features
 - Student, teacher, admin roles
 - Attendance tracking
 - Performance assessment
 
 ---
 
-<p align="center">Made with ❤️ for better school management</p>
+<p align="center">Made with ❤️ for better student management</p>

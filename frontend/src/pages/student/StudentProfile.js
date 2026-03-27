@@ -14,11 +14,10 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
-    TextField
+    DialogActions
 } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { Edit, Email, School, Class, Person, Badge } from '@mui/icons-material';
+import { Edit, School, Class, Person, Badge } from '@mui/icons-material';
 import styled from 'styled-components';
 import Popup from '../../components/Popup';
 
